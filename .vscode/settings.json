@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "cpmss.h": "c",
+        "lpr.h": "c"
+    }
+}
