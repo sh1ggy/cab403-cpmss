@@ -8,28 +8,21 @@
 #pragma once
 
 #include <stdbool.h>
-#include <math.h>
-#include <pthread.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
-#include <unistd.h>
-#include <errno.h>    
+#include <pthread.h>
+#include <math.h>
 
+char *generatePlate();
 
-void managerTest( );
-
-void simulatorTest ( );
-
-int generateInRange(int lower, int upper);
-
-int msSleep(long msec);
+// bool checkPlate(char[] plate);
 
 /**
  * Reads everything in a provided text file
  *
  * PRE: Need a .txt file in the same directory
- *
  * POST: reads
- * 
  * \param filename The address of a dbl_vector_t to initialise.
  */
 void readPlates ( const char * filename, const char * mode );

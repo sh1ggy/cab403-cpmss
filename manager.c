@@ -50,8 +50,8 @@ void readPlates( const char * filename, const char * mode ) {
         count++;
     }
 
-    htab_print(&h);
-    item_print(htab_find(&h, "480GML"));
+    // htab_print(&h);
+    // item_print(htab_find(&h, "480GML"));
 
     fclose(fp);
     return;
