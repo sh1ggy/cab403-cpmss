@@ -62,49 +62,87 @@ bool create_shared_object( shared_memory_t* shm, const char* share_name ) {
     //     return false;
     // }
 
+    // entrance_t *entrance = mmap(NULL, sizeof(lpr_sensor_t), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    // entrance_t entrances[NUM_LEVELS];
+    // for (int i = 0; i < NUM_LEVELS; i++) {
 
-    lpr_sensor_t *lpr_sensor = mmap(NULL, sizeof(lpr_sensor_t), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    // }
+
+    // exit_t exits[NUM_LEVELS];
+    // level_t levels[NUM_LEVELS];
+
+    // TO DO: SHARED MEMORY RETRIEVAL FUNCTION
+
+    // lpr_sensor_t *lpr_sensor = mmap(0, sizeof(lpr_sensor_t), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
  
-    int position = sizeof(lpr_sensor_t);
+    // size_t position = sizeof(lpr_sensor_t);
 
     // NULL address ensures this is inserted appropriately into shared memory - the address is chosen by the OS
-    boom_gate_t *boom_gate= mmap(NULL, sizeof(boom_gate_t), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    // boom_gate_t *boom_gate= mmap(0, sizeof(lpr_sensor_t) + sizeof(boom_gate_t), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
     
-    // NULL TERMINATED STRING
-    printf("LPR SENSOR:\n");
+    carpark_t *carpark = mmap(NULL, sizeof(carpark_t), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    printf("CARPARK:\n");
+
+    printf("LEVEL 1 -> ENTRANCE -> LPR -> PLATE:\n");
     char* plate = "123XXX";
-    strcpy(lpr_sensor->plate, plate);
-    printf("%s\n", lpr_sensor->plate);
+    strcpy(carpark->entrances[0].sensor.plate, plate);
+    printf("READING LPR PLATE: %s\n", carpark->entrances[0].sensor.plate);
 
-    printf("BOOM GATE:\n");
+    printf("LEVEL 1 -> ENTRANCE -> GATE -> STATUS:\n");
     char* status = "O";
-    strcpy(boom_gate->status, status);
-    printf("%s\n", boom_gate->status);
+    strcpy(carpark->entrances[0].gate.status, status);
+    printf("READING BOOM GATE: %s\n", carpark->entrances[0].gate.status);
+    
+    printf("READING LPR PLATE, AGAIN: %s\n", carpark->entrances[0].sensor.plate);
 
 
+    // NULL TERMINATED STRING
+    // printf("LPR SENSOR:\n");
+    // char* plate = "123XXX";
+    // strcpy(carpark->entrances[0].gate.status, plate);
+    // printf("%s\n", carpark->entrances[0].gate.status);
 
-    printf("lock offset = %ld byte in address structure.\n",
-    offsetof(lpr_sensor_t, lock));
-    printf("cond offset = %ld byte in address structure.\n",
-    offsetof(lpr_sensor_t, cond));
-    printf("plate offset = %ld byte in address structure.\n",
-    offsetof(lpr_sensor_t, plate));
-    printf("padding offset = %ld byte in address structure.\n",
-    offsetof(lpr_sensor_t, padding));
+    // printf("BOOM GATE:\n");
+    // char* status = "O";
+    // strcpy(boom_gate->status, status);
+    // printf("%s\n", boom_gate->status);
+
+    // printf("%s\n", lpr_sensor->plate);
+
+    printf("entrances offset = %ld byte in address structure.\n",
+    offsetof(carpark_t, entrances));
+
+    printf("exits offset = %ld byte in address structure.\n",
+    offsetof(carpark_t, exits));
+
+    printf("levels offset = %ld byte in address structure.\n",
+    offsetof(carpark_t, levels));
+
+    int carparkInt = sizeof(carpark_t);
+    printf("ENTIRE CARPARK: %d\n", carparkInt);
+
+    // printf("lock offset = %ld byte in address structure.\n",
+    // offsetof(lpr_sensor_t, lock));
+    // printf("cond offset = %ld byte in address structure.\n",
+    // offsetof(lpr_sensor_t, cond));
+    // printf("plate offset = %ld byte in address structure.\n",
+    // offsetof(lpr_sensor_t, plate));
+    // printf("padding offset = %ld byte in address structure.\n",
+    // offsetof(lpr_sensor_t, padding));
     
 
-    int size_lpr = sizeof(lpr_sensor_t);
-    printf("LPR SENSOR: %d\n", size_lpr);
-    int boom_gate_s = sizeof(boom_gate_t);
-    printf("LPR SENSOR: %d\n", boom_gate_s);
-    int info_sign = sizeof(information_sign_t);
-    printf("LPR SENSOR: %d\n", info_sign);
-    int entrance = sizeof(entrance_t);
-    printf("LPR SENSOR: %d\n", entrance);
-    int exit = sizeof(exit_t);
-    printf("LPR SENSOR: %d\n", exit);
-    int level = sizeof(level_t);
-    printf("LPR SENSOR: %d\n", level);
+    // int size_lpr = sizeof(lpr_sensor_t);
+    // printf("LPR SENSOR: %d\n", size_lpr);
+    // int boom_gate_s = sizeof(boom_gate_t);
+    // printf("LPR SENSOR: %d\n", boom_gate_s);
+    // int info_sign = sizeof(information_sign_t);
+    // printf("LPR SENSOR: %d\n", info_sign);
+    // int entrance = sizeof(entrance_t);
+    // printf("LPR SENSOR: %d\n", entrance);
+    // int exit = sizeof(exit_t);
+    // printf("LPR SENSOR: %d\n", exit);
+    // int level = sizeof(level_t);
+    // printf("LPR SENSOR: %d\n", level);
 
     // int memory_offset = 0;
     // for (int i = 0; i < NUM_LEVELS; i++) {

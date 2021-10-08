@@ -34,6 +34,7 @@ char *generatePlate();
  */
 void readPlates ( const char * filename, const char * mode );
 
+// strcmp() - string compare
 // bool checkPlate(char[] plate);
 
 /**
@@ -48,6 +49,8 @@ typedef struct shared_data {
 
     
 } shared_data_t;
+
+
 
 /**
  * A shared memory control structure.
@@ -108,6 +111,11 @@ typedef struct level {
     char padding[5]; //5 bytes      
 } level_t;
 
+typedef struct carpark {
+    entrance_t entrances[5];
+    exit_t exits[5];
+    level_t levels[5];
+} carpark_t;
 
 
 /**

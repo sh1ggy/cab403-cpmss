@@ -107,15 +107,15 @@ int main( int argc, char **argv )
     // threadWhileId = pthread_create( &threadWhileLoop, NULL, generateCars, &threadWhileId );
     // threadRangeId = pthread_create( &threadRange, NULL, generateInRange, NULL );
 
-    while (1) {
-        // Create two threads to be ran simultaneously
-        pthread_create(&threadWhileLoop, NULL, generateCars, NULL);
-        pthread_create(&threadRange, NULL, generatePlateTime, NULL);
+    // while (1) {
+    //     // Create two threads to be ran simultaneously
+    //     pthread_create(&threadWhileLoop, NULL, generateCars, NULL);
+    //     pthread_create(&threadRange, NULL, generatePlateTime, NULL);
         
-        // Runs both threads
-        pthread_join( threadWhileLoop, NULL );
-        pthread_join( threadRange, NULL );
-    }
+    //     // Runs both threads
+    //     pthread_join( threadWhileLoop, NULL );
+    //     pthread_join( threadRange, NULL );
+    // }
 
     return 0;
 }
