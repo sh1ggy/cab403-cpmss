@@ -2,6 +2,7 @@
     "files.associations": {
         "cpmss.h": "c",
         "lpr.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "memory": "c"
     }
 }

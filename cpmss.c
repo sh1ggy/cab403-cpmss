@@ -96,6 +96,7 @@ void *generateCars() {
 
 int main( int argc, char **argv )
 {     
+    simulatorMain();
     srand(time(NULL));
 
     pthread_t threadWhileLoop, threadRange;
