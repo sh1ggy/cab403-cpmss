@@ -3,56 +3,39 @@
 #include <string.h>
 #include "cpmss.h"
 #include "lpr.h"
+#include "simulator.h"
 
-// Setting number of buckets to 100
-#define BUCKETS_SIZE 100
-size_t buckets = BUCKETS_SIZE;
-htab_t h;
+void managerMain(  ) {
+    int shm_fd;
+    const char *key;
+    carpark_t *shm;
 
-void managerTest(  ) {
-    printf("Hello! I am the manager.");
-    return;
-}
+    /*
+     * We need to get the segment named
+     * "SHM_TEST", created by the server.
+     */
+    key = SHARE_NAME;
 
-int platesInit(  ) {
-    if (!htab_init(&h, buckets))
+    /*
+     * Locate the segment.
+     */
+    if ((shm_fd = shm_open(key, O_RDWR, 0)) < 0)
     {
-        printf("failed to initialise hash table\n");
-        return EXIT_FAILURE;
-    }
-    return 0;
-} 
-
-// https://stackoverflow.com/questions/3501338/c-read-file-line-by-line
-
-void readPlates( const char * filename, const char * mode ) {
-    platesInit();
-    FILE* fp;
-    int count = 0;
-    fp = fopen(filename, mode);
-    if (fp == NULL) {
-        perror("Failed: ");
-        return;
+        perror("shm_open");
+        exit(1);
     }
 
-    char buffer[256];
-
-    while (fgets(buffer, sizeof buffer, fp)) {
-        buffer[strcspn(buffer, "\n")] = 0;
-        printf("%s\n", buffer);
-        char *plate = (char *)malloc(sizeof(char)*100);  
-        strcpy(plate, buffer);
-        htab_add(&h, plate, count);
-        
-        // printf("%s\n HASH: ", plate);
-        // fgets(plate, 100 - 1, fp);
-        
-        count++;
+    /*
+     * Now we attach the segment to our data space.
+     */
+    shm = mmap(0, PARKING_SIZE, PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    if (shm == (carpark_t *)-1)
+    {
+        perror("mmap");
+        exit(1);
     }
 
-    // htab_print(&h);
-    // item_print(htab_find(&h, "480GML"));
-
-    fclose(fp);
+    printf("Hello! I am the manager.\n");
+    printf("%s\n", shm->entrances[0].sensor.plate);
     return;
 }

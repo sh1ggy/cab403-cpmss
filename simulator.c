@@ -23,11 +23,11 @@
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 int flag = 0;
-
 pthread_mutex_t plateGenerationMutex;
-#define SHARE_NAME "PARKING"
-#define PARKING_SIZE 2920
-#define NUM_LEVELS 5
+// Setting number of buckets to 100
+#define BUCKETS_SIZE 100
+size_t buckets = BUCKETS_SIZE;
+htab_t h;
 
 bool create_shared_object( shared_memory_t* shm, const char* share_name ) {
     printf("CREATING SHARED MEMORY\n");
@@ -36,19 +36,16 @@ bool create_shared_object( shared_memory_t* shm, const char* share_name ) {
     
     shm -> name = share_name;
 
-    // Create the shared memory object, allowing read-write access, and saving the
-    // resulting file descriptor in shm->fd. If creation failed, ensure 
-    // that shm->data is NULL and return false.
+    // shm init, saved to shm_fd
     int shm_fd = shm_open(share_name, O_CREAT | O_RDWR, 0666);
     shm -> fd = shm_fd; 
+    // Error check
     if (shm_fd < 0) {
         shm -> data = NULL;
         return false;
     }
 
-    // Set the capacity of the shared memory object via ftruncate. If the 
-    // operation fails, ensure that shm->data is NULL and return false. 
-    
+    // ftruncate sets capacity of shm object + error check
     if (ftruncate(shm->fd, PARKING_SIZE) != 0){
         shm->data = NULL;
         return false;
@@ -66,7 +63,6 @@ bool create_shared_object( shared_memory_t* shm, const char* share_name ) {
     // TO DO: SHARED MEMORY RETRIEVAL FUNCTION
 
     // NULL address ensures this is inserted appropriately into shared memory - the address is chosen by the OS
-    
     carpark_t *carpark = mmap(NULL, sizeof(carpark_t), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
     shm -> data = carpark;
 
@@ -115,7 +111,6 @@ bool get_shared_object( shared_memory_t* shm, const char* share_name ) {
 
     // Otherwise, attempt to map the shared memory via mmap, and save the address
     // in shm->data. If mapping fails, return false.
-    // INSERT SOLUTION HERE
     carpark_t *map = mmap(0, 48, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
     shm -> data = map;
 
@@ -130,10 +125,64 @@ bool get_shared_object( shared_memory_t* shm, const char* share_name ) {
     return true;
 }
 
-void simulatorTest(  ) {
-    printf("Hello! I am the simulator");
+/**
+* HASHTABLE
+*/
+int platesInit(  ) {
+    if (!htab_init(&h, buckets))
+    {
+        printf("failed to initialise hash table\n");
+        return EXIT_FAILURE;
+    }
+    return 0;
+} 
+
+// https://stackoverflow.com/questions/3501338/c-read-file-line-by-line
+void readPlates( const char * filename, const char * mode ) {
+    platesInit();
+    FILE* fp;
+    int count = 0;
+    fp = fopen(filename, mode);
+    if (fp == NULL) {
+        perror("Failed: ");
+        return;
+    }
+
+    char buffer[256];
+
+    while (fgets(buffer, sizeof buffer, fp)) {
+        buffer[strcspn(buffer, "\n")] = 0;
+        // printf("%s\n", buffer);
+        char *plate = (char *)malloc(sizeof(char)*100);  
+        strcpy(plate, buffer);
+        htab_add(&h, plate, count);
+        
+        // printf("%s\n HASH: ", plate);
+        // fgets(plate, 100 - 1, fp);
+        
+        count++;
+    }
+
+    htab_print(&h);
+    // item_print(htab_find(&h, "480GML"));
+
+    fclose(fp);
     return;
 }
+
+bool checkPlate( char plate[6] ) {
+    if (htab_find(&h, plate) != NULL) {
+        printf("\n---------FOUND PLATE---------\n");
+        printf("VALID PLATE: %s\n", plate);
+        // exit(0); // COMMENT OUT LATER< THIS IS FOR TESTING
+        return true;
+    }
+    return false;
+}
+
+/**
+* GENERATING PLATES TO BE CHECKED
+*/
 
 char *generatePlate(  ) {
     // Mutex locks to protect the global random
@@ -183,7 +232,8 @@ void *generatePlateTime() {
     
     // Calculate sleep for ms
     plateGenerateMS = msSleep(plateGenerateTime);
-    sleep(plateGenerateMS);
+    // REMOVE SLEEP TO TEST PLATE GENERATION
+    sleep(plateGenerateMS); 
 
     // Flip while condition for generateCars()
     flag = 1;
@@ -194,8 +244,7 @@ void *generatePlateTime() {
     return 0;
 }
 
-int msSleep (long msec)
-{
+int msSleep (long msec) {
     struct timespec ts;
     int result;
 
@@ -209,7 +258,8 @@ int msSleep (long msec)
     ts.tv_nsec = (msec % 1000) * 1000000;
 
     do {
-        result = nanosleep(&ts, &ts);
+        // REMOVE SLEEP TO TEST PLATE GENERATION
+        result = nanosleep(&ts, &ts); 
     } while (result && errno == EINTR);
 
     return result;
@@ -218,7 +268,7 @@ int msSleep (long msec)
 
 
 void *generateCars() {
-    char plates[6];
+    char plate[6];
 
     // Lock mutex to protect variables
     pthread_mutex_lock(&mutex);
@@ -226,18 +276,14 @@ void *generateCars() {
     // Wait for the time till new license plate to be generated
     while (flag == 0) {
         pthread_cond_wait(&cond, &mutex);
-        // sleep(plateGenerateMS);
     } 
 
     // Generate the plate and assign
-    strcpy(plates, generatePlate());
-    printf("PLATE: %s\n", plates);
+    strcpy(plate, generatePlate());
+    printf("PLATE: %s\n", plate);
 
-    // Assign plate & then check the plate
-    // Allow into car park if found
-    
-    // Discard if not found
-
+    // If true save to shared memory entrance LPR 
+    checkPlate(plate);
 
     // Unlock the mutex protection
     pthread_mutex_unlock(&mutex); 
@@ -247,6 +293,8 @@ void *generateCars() {
 void simulatorMain() {
     shared_memory_t shm;
     create_shared_object( &shm, SHARE_NAME );
+
+    readPlates("plates.txt", "r");
 
     srand(time(NULL));
 
@@ -262,7 +310,7 @@ void simulatorMain() {
         pthread_join( threadRange, NULL );
     }
 
-    return 0;
+    return;
     
 }
 

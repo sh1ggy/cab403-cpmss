@@ -15,23 +15,6 @@
 #include <errno.h>    
 
 
-void managerTest( );
+void managerMain ( );
 
-void simulatorTest ( );
-
-int generateInRange(int lower, int upper);
-
-int msSleep(long msec);
-
-/**
- * Reads everything in a provided text file
- *
- * PRE: Need a .txt file in the same directory
- *
- * POST: reads
- * 
- * \param filename The address of a dbl_vector_t to initialise.
- */
-void readPlates ( const char * filename, const char * mode );
-
-#define TEST 5
+void simulatorMain ( );

@@ -21,9 +21,15 @@
 #include <sys/stat.h>       
 #include <fcntl.h>          
 
-void simulatorMain();
+#define SHARE_NAME "PARKING"
+#define PARKING_SIZE 2920
+#define NUM_LEVELS 5
 
-char *generatePlate();
+/**
+* HASHTABLE & READING PLATES
+*/
+
+int platesInit ( );
 
 /**
  * Reads everything in a provided text file
@@ -34,8 +40,25 @@ char *generatePlate();
  */
 void readPlates ( const char * filename, const char * mode );
 
-// strcmp() - string compare
-// bool checkPlate(char[] plate);
+bool checkPlate(char plate[6]);
+
+/**
+* GENERATING PLATES TO BE CHECKED
+*/
+char *generatePlate();
+
+int generateInRange(int lower, int upper);
+
+void *generatePlateTime();
+
+int msSleep (long msec);
+
+void *generateCars();
+
+
+/**
+* STRUCTS & SHARED MEMORY
+*/
 
 // LPR - 96 bytes
 typedef struct lpr_sensor {
@@ -151,6 +174,3 @@ bool create_shared_object( shared_memory_t* shm, const char* share_name );
  *         shm->data != NULL.
  */
 bool get_shared_object( shared_memory_t* shm, const char* share_name );
-
-
-#define TEST 5
