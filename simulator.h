@@ -37,35 +37,6 @@ void readPlates ( const char * filename, const char * mode );
 // strcmp() - string compare
 // bool checkPlate(char[] plate);
 
-/**
- * A shared data block.
- */
-typedef struct shared_data {
-    /// Used by controller to notify worker when a task is available.
-    // sem_t controller_semaphore;
-
-    /// Used by worker to notify controller when a result is available.
-    // sem_t worker_semaphore;
-
-    
-} shared_data_t;
-
-
-
-/**
- * A shared memory control structure.
- */
-typedef struct shared_memory {
-    /// The name of the shared memory object.
-    const char* name;
-
-    /// The file descriptor used to manage the shared memory object.
-    int fd;
-
-    /// Address of the shared data block. 
-    shared_data_t* data;
-} shared_memory_t;
-
 // LPR - 96 bytes
 typedef struct lpr_sensor {
     pthread_mutex_t lock; //40 bytes
@@ -117,6 +88,19 @@ typedef struct carpark {
     level_t levels[5];
 } carpark_t;
 
+/**
+ * A shared memory control structure.
+ */
+typedef struct shared_memory {
+    /// The name of the shared memory object.
+    const char* name;
+
+    /// The file descriptor used to manage the shared memory object.
+    int fd;
+
+    /// Address of the shared data block. 
+    carpark_t* data;
+} shared_memory_t;
 
 /**
  * Controller: initialise a shared_object_t, creating a block of shared memory

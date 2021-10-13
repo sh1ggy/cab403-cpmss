@@ -3,9 +3,11 @@
 #include <string.h>
 #include <time.h>
 #include <pthread.h>
+#include <errno.h>    
 
 #include "cpmss.h"
 #include "simulator.h"
+#include "lpr.h"
 
 // shared memory libs
 #include <semaphore.h>
@@ -17,16 +19,15 @@
 #include <stddef.h>       
 
 
+/* global mutex for our program. */
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+int flag = 0;
+
 pthread_mutex_t plateGenerationMutex;
 #define SHARE_NAME "PARKING"
 #define PARKING_SIZE 2920
 #define NUM_LEVELS 5
-
-void simulatorMain() {
-    shared_memory_t shm;
-    create_shared_object( &shm, SHARE_NAME );
-    
-}
 
 bool create_shared_object( shared_memory_t* shm, const char* share_name ) {
     printf("CREATING SHARED MEMORY\n");
@@ -62,25 +63,13 @@ bool create_shared_object( shared_memory_t* shm, const char* share_name ) {
     //     return false;
     // }
 
-    // entrance_t *entrance = mmap(NULL, sizeof(lpr_sensor_t), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
-    // entrance_t entrances[NUM_LEVELS];
-    // for (int i = 0; i < NUM_LEVELS; i++) {
-
-    // }
-
-    // exit_t exits[NUM_LEVELS];
-    // level_t levels[NUM_LEVELS];
-
     // TO DO: SHARED MEMORY RETRIEVAL FUNCTION
 
-    // lpr_sensor_t *lpr_sensor = mmap(0, sizeof(lpr_sensor_t), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
- 
-    // size_t position = sizeof(lpr_sensor_t);
-
     // NULL address ensures this is inserted appropriately into shared memory - the address is chosen by the OS
-    // boom_gate_t *boom_gate= mmap(0, sizeof(lpr_sensor_t) + sizeof(boom_gate_t), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
     
     carpark_t *carpark = mmap(NULL, sizeof(carpark_t), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    shm -> data = carpark;
+
     printf("CARPARK:\n");
 
     printf("LEVEL 1 -> ENTRANCE -> LPR -> PLATE:\n");
@@ -95,117 +84,17 @@ bool create_shared_object( shared_memory_t* shm, const char* share_name ) {
     
     printf("READING LPR PLATE, AGAIN: %s\n", carpark->entrances[0].sensor.plate);
 
+    // printf("entrances offset = %ld byte in address structure.\n",
+    // offsetof(carpark_t, entrances));
 
-    // NULL TERMINATED STRING
-    // printf("LPR SENSOR:\n");
-    // char* plate = "123XXX";
-    // strcpy(carpark->entrances[0].gate.status, plate);
-    // printf("%s\n", carpark->entrances[0].gate.status);
+    // printf("exits offset = %ld byte in address structure.\n",
+    // offsetof(carpark_t, exits));
 
-    // printf("BOOM GATE:\n");
-    // char* status = "O";
-    // strcpy(boom_gate->status, status);
-    // printf("%s\n", boom_gate->status);
-
-    // printf("%s\n", lpr_sensor->plate);
-
-    printf("entrances offset = %ld byte in address structure.\n",
-    offsetof(carpark_t, entrances));
-
-    printf("exits offset = %ld byte in address structure.\n",
-    offsetof(carpark_t, exits));
-
-    printf("levels offset = %ld byte in address structure.\n",
-    offsetof(carpark_t, levels));
+    // printf("levels offset = %ld byte in address structure.\n",
+    // offsetof(carpark_t, levels));
 
     int carparkInt = sizeof(carpark_t);
     printf("ENTIRE CARPARK: %d\n", carparkInt);
-
-    // printf("lock offset = %ld byte in address structure.\n",
-    // offsetof(lpr_sensor_t, lock));
-    // printf("cond offset = %ld byte in address structure.\n",
-    // offsetof(lpr_sensor_t, cond));
-    // printf("plate offset = %ld byte in address structure.\n",
-    // offsetof(lpr_sensor_t, plate));
-    // printf("padding offset = %ld byte in address structure.\n",
-    // offsetof(lpr_sensor_t, padding));
-    
-
-    // int size_lpr = sizeof(lpr_sensor_t);
-    // printf("LPR SENSOR: %d\n", size_lpr);
-    // int boom_gate_s = sizeof(boom_gate_t);
-    // printf("LPR SENSOR: %d\n", boom_gate_s);
-    // int info_sign = sizeof(information_sign_t);
-    // printf("LPR SENSOR: %d\n", info_sign);
-    // int entrance = sizeof(entrance_t);
-    // printf("LPR SENSOR: %d\n", entrance);
-    // int exit = sizeof(exit_t);
-    // printf("LPR SENSOR: %d\n", exit);
-    // int level = sizeof(level_t);
-    // printf("LPR SENSOR: %d\n", level);
-
-    // int memory_offset = 0;
-    // for (int i = 0; i < NUM_LEVELS; i++) {
-    //     // ATTACH MEMORY
-
-        
-    //     memory_offset + sizeof(lpr_sensor_t);
-    // }
-
-
-    // char* shm_addr;
-    // shm_addr = shmat(shm_fd, NULL, 0);
-    // if (!shm_addr) { /* operation failed. */
-    //     perror("shmat: ");
-    //     exit(1);
-    // }
-    // printf("ATTACHED\n");
-
-    // struct lpr_sensor {
-    //     char* name;
-    //     int number;
-    // };
-
-    // struct info_sign {
-    //     pthread_mutex_t info_lock
-    // }
-
-    // sizeof(56) = 56;
-
-    // int* sensors_num;
-    // struct lpr_sensor* sensors;
-    
-    // sensors_num = (int*) shm_addr;
-    // sensors_num = 0;
-    // printf("ADDRESSED\n");
-    // sensors = (struct lpr_sensor*) ((void*)shm_addr + sizeof(int));
-    // printf("SIZED\n");
-
-    // strcpy(sensors[0].name, "hello");
-    // printf("HELLER\n");
-    // sensors->number = 0;
-
-    // (*sensors_num)++;
-
-    // sensors[1].name = "world";
-    // sensors->number = 1;
-    // (*sensors_num)++;
-
-    // for (int i = 0; i < (*sensors_num); i++) {
-    //     printf("SENSOR %d: \n", i+1);
-    //     printf("    -> NAME %s: \n", sensors[i].name);
-    //     printf("    -> NUMBER %d: \n", sensors[i].number);
-    // }
-
-
-
-
-    // int* shm_id = shmat(shm_fd, NULL, 0);
-    // lpr_sensor* pData = (lpr_sensor *) shm_id;
-    // pData -> a = shmat(share_name, 0, 0);
-    // pData -> a = shmat(shm_fd, 0, 0);
-    // int * aInt = pData -> a;
-    // printf("%ls", aInt);
 
     printf("DONE CREATING SHARED MEMORY\n");
     return true;
@@ -227,7 +116,7 @@ bool get_shared_object( shared_memory_t* shm, const char* share_name ) {
     // Otherwise, attempt to map the shared memory via mmap, and save the address
     // in shm->data. If mapping fails, return false.
     // INSERT SOLUTION HERE
-    shared_data_t *map = mmap(0, 48, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    carpark_t *map = mmap(0, 48, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
     shm -> data = map;
 
     if (map == MAP_FAILED)
@@ -272,5 +161,108 @@ char *generatePlate(  ) {
     pthread_mutex_unlock(&plateGenerationMutex);
     return plate;
 
+}
+
+int generateInRange(int lower, int upper) {
+    
+    int num = (rand() % (upper - lower + 1)) + lower;
+    return num;
+}
+
+void *generatePlateTime() {
+    // Lock mutex to protect variables
+    pthread_mutex_lock(&mutex);
+    
+    // Signal that work is being done
+    pthread_cond_signal(&cond);
+
+    // Generate time  
+    int plateGenerateTime = generateInRange(1, 100);
+    int plateGenerateMS;    
+    printf("RAND TIME: %d\n", plateGenerateTime);
+    
+    // Calculate sleep for ms
+    plateGenerateMS = msSleep(plateGenerateTime);
+    sleep(plateGenerateMS);
+
+    // Flip while condition for generateCars()
+    flag = 1;
+    
+    // Unlock mutex protection
+    pthread_mutex_unlock(&mutex);
+
+    return 0;
+}
+
+int msSleep (long msec)
+{
+    struct timespec ts;
+    int result;
+
+    if (msec < 0)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    ts.tv_sec = msec / 1000;
+    ts.tv_nsec = (msec % 1000) * 1000000;
+
+    do {
+        result = nanosleep(&ts, &ts);
+    } while (result && errno == EINTR);
+
+    return result;
+}
+
+
+
+void *generateCars() {
+    char plates[6];
+
+    // Lock mutex to protect variables
+    pthread_mutex_lock(&mutex);
+
+    // Wait for the time till new license plate to be generated
+    while (flag == 0) {
+        pthread_cond_wait(&cond, &mutex);
+        // sleep(plateGenerateMS);
+    } 
+
+    // Generate the plate and assign
+    strcpy(plates, generatePlate());
+    printf("PLATE: %s\n", plates);
+
+    // Assign plate & then check the plate
+    // Allow into car park if found
+    
+    // Discard if not found
+
+
+    // Unlock the mutex protection
+    pthread_mutex_unlock(&mutex); 
+    return 0;
+}
+
+void simulatorMain() {
+    shared_memory_t shm;
+    create_shared_object( &shm, SHARE_NAME );
+
+    srand(time(NULL));
+
+    pthread_t threadWhileLoop, threadRange;
+
+    while (1) {
+        // Create two threads to be ran simultaneously
+        pthread_create(&threadWhileLoop, NULL, generateCars, NULL );
+        pthread_create(&threadRange, NULL, generatePlateTime, NULL);
+        
+        // Runs both threads
+        pthread_join( threadWhileLoop, NULL );
+        pthread_join( threadRange, NULL );
+    }
+
+    return 0;
+    
 }
 
