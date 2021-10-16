@@ -8,9 +8,12 @@
 #include "cpmss.h"
 #include "lpr.h"
 #include "simulator.h"
+#include "shm.h"
 
 int main( int argc, char **argv )
 {     
-    managerMain();
+    htab_destroy(&h);
+    
     simulatorMain();
+    managerMain();
 }

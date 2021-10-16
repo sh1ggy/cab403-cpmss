@@ -4,6 +4,10 @@
 #include <stdlib.h>   // for malloc(), free(), NULL
 #include <string.h>   // for strcmp()
 
+
+
+#ifndef LPR_H
+#define LPR_H
 // An item inserted into a hash table.
 // As hash collisions can occur, multiple items can exist in one bucket.
 // Therefore, each bucket is a linked list of items that hashes to that bucket.
@@ -24,6 +28,12 @@ struct htab
     item_t **buckets;
     size_t size;
 };
+
+htab_t h;
+
+#endif
+
+
 
 // Initialise a new hash table with n buckets.
 // pre: true
@@ -62,3 +72,15 @@ void htab_destroy(htab_t *h);
 // pre: true
 // post: hash table is printed to screen
 void htab_print(htab_t *h);
+
+/**
+ * Reads everything in a provided text file
+ *
+ * PRE: Need a .txt file in the same directory
+ * POST: reads
+ * \param filename The address of a dbl_vector_t to initialise.
+ */
+void readPlates( const char * filename, const char * mode );
+
+// Initialise the hashtable of approved licence plates to look through
+int platesInit(  );
