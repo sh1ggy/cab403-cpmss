@@ -37,7 +37,7 @@ bool create_shared_object( shared_memory_t* shm, const char* share_name ) {
     // TO DO: SHARED MEMORY RETRIEVAL FUNCTION
 
     // NULL address ensures this is inserted appropriately into shared memory - the address is chosen by the OS
-    carpark_t *carpark = mmap(NULL, sizeof(carpark_t), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    carpark_t *carpark = mmap(NULL, PARKING_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
     shm -> data = carpark;
     if (shm->data == MAP_FAILED)
     {
@@ -45,11 +45,11 @@ bool create_shared_object( shared_memory_t* shm, const char* share_name ) {
     }
 
     // ------- TESTING SHARED MEMORY CODE
-    // printf("CARPARK:\n");
+    printf("CARPARK:\n");
 
-    // printf("LEVEL 1 -> ENTRANCE -> LPR -> PLATE:\n");
     // char* plate = "123XXX";
-    // strcpy(carpark->entrances[0].sensor.plate, plate);
+
+
     // printf("READING LPR PLATE: %s\n", carpark->entrances[0].sensor.plate);
 
     // printf("LEVEL 1 -> ENTRANCE -> GATE -> STATUS:\n");
@@ -59,14 +59,14 @@ bool create_shared_object( shared_memory_t* shm, const char* share_name ) {
     
     // printf("READING LPR PLATE, AGAIN: %s\n", carpark->entrances[0].sensor.plate);
 
-    // printf("entrances offset = %ld byte in address structure.\n",
-    // offsetof(carpark_t, entrances));
+    printf("entrances offset = %ld byte in address structure.\n",
+    offsetof(carpark_t, entrances));
 
-    // printf("exits offset = %ld byte in address structure.\n",
-    // offsetof(carpark_t, exits));
+    printf("exits offset = %ld byte in address structure.\n",
+    offsetof(carpark_t, exits));
 
-    // printf("levels offset = %ld byte in address structure.\n",
-    // offsetof(carpark_t, levels));
+    printf("levels offset = %ld byte in address structure.\n",
+    offsetof(carpark_t, levels));
 
     // int carparkInt = sizeof(carpark_t);
     // printf("ENTIRE CARPARK: %d\n", carparkInt);

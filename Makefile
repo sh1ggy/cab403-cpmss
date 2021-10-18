@@ -4,7 +4,7 @@ CFLAGS = -Wall -pedantic # Show all reasonable warnings
 all: cpmss
 
 # TODO: firealarm.o
-cpmss: manager.o simulator.o lpr.o shm.o plates.o  cpmss.o -lm -lpthread -lrt
+cpmss: manager.o simulator.o lpr.o shm.o plates.o cars.o cpmss.o -lm -lpthread -lrt
 
 manager.o: manager.c
 
@@ -12,7 +12,9 @@ simulator.o: simulator.c
 
 shm.o: shm.c
 
-plates.o: plates.o
+plates.o: plates.c
+
+cars.o: cars.c
 
 lpr.o: lpr.c
 

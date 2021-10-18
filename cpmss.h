@@ -14,7 +14,6 @@
 #include <unistd.h>
 #include <errno.h>    
 
+void *managerMain ( );
 
-void managerMain ( );
-
-void simulatorMain ( );
+void *simulatorMain ( );

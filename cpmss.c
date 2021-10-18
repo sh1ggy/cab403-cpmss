@@ -13,7 +13,18 @@
 int main( int argc, char **argv )
 {     
     htab_destroy(&h);
-    
-    simulatorMain();
-    managerMain();
+
+    sleep(1);    
+
+    pthread_t simulatorThread, managerThread;
+
+    pthread_create(&simulatorThread, NULL, simulatorMain, NULL );
+    pthread_create(&managerThread, NULL, managerMain, NULL );
+        
+        // Runs both threads
+    pthread_join( simulatorThread, NULL );
+    pthread_join( managerThread, NULL );
+
+    // simulatorMain();
+    // managerMain();
 }

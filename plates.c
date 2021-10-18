@@ -10,12 +10,13 @@
 #include "plates.h"
 #include "lpr.h"
 #include "shm.h"
-
+#include "cars.h"
 
 /* global mutex for our program. */
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 int flag = 0;
+bool flagPlateFound = false;
 pthread_mutex_t plateGenerationMutex;
 
 bool checkPlate( char plate[6] ) {
@@ -97,7 +98,6 @@ void *generatePlateTime() {
 }
 
 void *generateCars() {
-    shared_memory_t shm;
     char plate[6];
 
     // Lock mutex to protect variables
@@ -112,14 +112,30 @@ void *generateCars() {
     strcpy(plate, generatePlate());
     printf("%s\n", plate);
 
-    get_shared_object(&shm, SHARE_NAME);
-    int rand = generateInRange(0, 4);
     // If true save to shared memory entrance LPR 
     if (checkPlate(plate)) {
-        printf("ENTRANCE: %d\n", rand);
-        printf("SHARED MEMORY: %s\n", shm.data->entrances[rand].sensor.plate);
-        strcpy(shm.data->entrances[rand].sensor.plate, plate);
-        destroy_shared_object(&shm);
+        int entranceRand = generateInRange(0, 4);
+        shared_memory_t shm;
+        get_shared_object(&shm, SHARE_NAME);
+        printf("ENTRANCE: %d\n", entranceRand);
+
+        //using "strncpy" instead of "strcpy" to adds a terminating null byte, and does not pad the target with (further) null bytes
+        //"strcpy" was producing a strange box character for entrances 2-5 and not entrance 1. 
+        strncpy(shm.data->entrances[entranceRand].sensor.plate, plate, 6);
+        // destroy_shared_object(&shm);
+        flagPlateFound = true;
+        // INSERT ITEM PLATE CREATE THREAD
+        // TODO: NULL CHAR WHEN PRINTING FROM INSERT_ITEM STRING
+
+        initCars();    
+
+        insert_item(plate);
+        
+        sleep(5);
+    }
+
+    else {
+        flagPlateFound = false;
     }
     // Unlock the mutex protection
     pthread_mutex_unlock(&mutex); 

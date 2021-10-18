@@ -10,6 +10,7 @@
 #include "shm.h"   
 #include "lpr.h"
 #include "plates.h"
+#include "cars.h"
 
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@BRING BACK@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -52,7 +53,7 @@ int generateInRange(int lower, int upper) {
 //     return result;
 // }
 
-void simulatorMain() {
+void *simulatorMain() {
     shared_memory_t shm;
     create_shared_object( &shm, SHARE_NAME );
 
@@ -61,6 +62,7 @@ void simulatorMain() {
     srand(time(NULL));
 
     pthread_t threadWhileLoop, threadRange;
+
 
     while (1) {
         // Create two threads to be ran simultaneously
@@ -73,7 +75,7 @@ void simulatorMain() {
     }
     destroy_shared_object(&shm);
 
-    return;
+    return 0;
     
 }
 

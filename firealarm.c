@@ -6,6 +6,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <math.h>
+#include "shm.h"
+#include "simulator.h"
 
 int shm_fd;
 volatile void *shm;

@@ -15,7 +15,6 @@
 
 #define SHARE_NAME "PARKING"
 
-
 /**
  * A shared memory control structure.
  */
