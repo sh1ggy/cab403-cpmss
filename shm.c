@@ -59,14 +59,14 @@ bool create_shared_object( shared_memory_t* shm, const char* share_name ) {
     
     // printf("READING LPR PLATE, AGAIN: %s\n", carpark->entrances[0].sensor.plate);
 
-    printf("entrances offset = %ld byte in address structure.\n",
-    offsetof(carpark_t, entrances));
+    // printf("entrances offset = %ld byte in address structure.\n",
+    // offsetof(carpark_t, entrances));
 
-    printf("exits offset = %ld byte in address structure.\n",
-    offsetof(carpark_t, exits));
+    // printf("exits offset = %ld byte in address structure.\n",
+    // offsetof(carpark_t, exits));
 
-    printf("levels offset = %ld byte in address structure.\n",
-    offsetof(carpark_t, levels));
+    // printf("levels offset = %ld byte in address structure.\n",
+    // offsetof(carpark_t, levels));
 
     // int carparkInt = sizeof(carpark_t);
     // printf("ENTIRE CARPARK: %d\n", carparkInt);

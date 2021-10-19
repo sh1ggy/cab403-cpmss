@@ -15,6 +15,20 @@
 typedef int buffer_item;
 #define BUFFER_SIZE 5
 
+// typedef struct threadpool {
+
+// }
+
+typedef struct car {
+	char plate;
+	int id;
+} car_t;
+
+// car cars[100];
+
+
+// cars[0].plate -> 
+
 //worker
 void *car(void *param);
 

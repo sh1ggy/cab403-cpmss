@@ -31,9 +31,6 @@ struct htab
 
 htab_t h;
 
-#endif
-
-
 
 // Initialise a new hash table with n buckets.
 // pre: true
@@ -82,5 +79,9 @@ void htab_print(htab_t *h);
  */
 void readPlates( const char * filename, const char * mode );
 
+// char * randLine( );
+
 // Initialise the hashtable of approved licence plates to look through
 int platesInit(  );
+
+#endif

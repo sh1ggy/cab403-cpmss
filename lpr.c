@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "lpr.h"
+#include "simulator.h"
 
 // Setting number of buckets to 100
 #define BUCKETS_SIZE 2626
@@ -133,6 +134,7 @@ void readPlates( const char * filename, const char * mode ) {
         char *plate = (char *)malloc(sizeof(char)*100);  
         strcpy(plate, buffer);
         htab_add(&h, plate, count);
+
         
         // printf("%s\n HASH: ", plate);
         // fgets(plate, 100 - 1, fp);
@@ -147,6 +149,41 @@ void readPlates( const char * filename, const char * mode ) {
     fclose(fp);
     return;
 }
+
+//------------------------------------------ 50/50
+// char *randLine ( ) {
+//     char plate[6];
+//     int randLine = 0;
+//     randLine = generateInRange( 1, 100 );
+//     static const char filename[] = "plates.txt";
+//     FILE *fp = fopen(filename, "r");
+//     int count = 0;
+//     if ( fp != NULL )
+//     {
+//         char buffer[256]; /* or other suitable maximum line size */
+//         while (fgets(buffer, sizeof buffer, fp) != NULL) /* read a line */
+//         {
+//             if (count == randLine)
+//             {
+//                 strcpy(plate, buffer);
+//                 fclose(fp);
+//                 return plate;
+//                 //use line or in a function return it
+//                 //in case of a return first close the file with "fclose(file);"
+
+//             }
+//             else
+//             {
+//                 count++;
+//             }
+//         }
+//         fclose(fp);
+//     }
+//     else
+//     {
+//         //file doesn't exist
+//     }
+// }
 
 int platesInit(  ) {
     if (!htab_init(&h, buckets))

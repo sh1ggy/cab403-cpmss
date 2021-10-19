@@ -19,7 +19,7 @@ int flag = 0;
 bool flagPlateFound = false;
 pthread_mutex_t plateGenerationMutex;
 
-bool checkPlate( char plate[6] ) {
+bool checkPlate( char *plate ) {
     if (htab_find(&h, plate) == NULL) {
         return false;
     }
@@ -40,29 +40,42 @@ bool checkPlate( char plate[6] ) {
 char *generatePlate(  ) {
     // Mutex locks to protect the global random
     pthread_mutex_lock(&plateGenerationMutex);
-
-    // Uses current time as the random seed
     char *plate = (char *)malloc(6);
-    for (int i = 0; i < 3; i++) {
-        int randIntNumber = rand();
-        int randIntLetter = rand();
 
-        // Generate random integers as a part of the plate
-        randIntNumber %= 10;
-        randIntNumber += 48;
-        char randNumberConverted = randIntNumber;
-        plate[i] = randNumberConverted;
+    //------------------------------------------ 50/50
+    // int allowCarCheck = generateInRange(0,1);
 
-        // Generate random letters as a part of the plate
-        randIntLetter %= 26;
-        randIntLetter += 65;
-        char randLetterConverted = randIntLetter;
-        plate[i+3] = randLetterConverted;
+    // if (allowCarCheck == 0)
+    // {
+    //     plate = randLine();
+    //     printf("GET RAND LINE PLATE\n");
+    //     printf("RAND: %s\n", plate);
+    // }
+    // else
+    // {
+        // Uses current time as the random seed
+        // char *plate = (char *)malloc(6);
+        for (int i = 0; i < 3; i++) {
+            int randIntNumber = rand();
+            int randIntLetter = rand();
 
-    }
+            // Generate random integers as a part of the plate
+            randIntNumber %= 10;
+            randIntNumber += 48;
+            char randNumberConverted = randIntNumber;
+            plate[i] = randNumberConverted;
+
+            // Generate random letters as a part of the plate
+            randIntLetter %= 26;
+            randIntLetter += 65;
+            char randLetterConverted = randIntLetter;
+            plate[i+3] = randLetterConverted;
+
+        }
+    // }
+    
     pthread_mutex_unlock(&plateGenerationMutex);
     return plate;
-
 }
 
 void *generatePlateTime() {
@@ -114,28 +127,29 @@ void *generateCars() {
 
     // If true save to shared memory entrance LPR 
     if (checkPlate(plate)) {
+        char carPlate[6];
+        strcpy(carPlate, plate);
+
+        // Randomly generating the entrance check the car will go to (1-5)
         int entranceRand = generateInRange(0, 4);
         shared_memory_t shm;
         get_shared_object(&shm, SHARE_NAME);
         printf("ENTRANCE: %d\n", entranceRand);
 
-        //using "strncpy" instead of "strcpy" to adds a terminating null byte, and does not pad the target with (further) null bytes
-        //"strcpy" was producing a strange box character for entrances 2-5 and not entrance 1. 
-        strncpy(shm.data->entrances[entranceRand].sensor.plate, plate, 6);
-        // destroy_shared_object(&shm);
+        // Copies the car plate over to shared memory
+        strcpy(shm.data->entrances[entranceRand].sensor.plate, carPlate);
+        
+        // destroy_shared_object(&shm); CHECK
         flagPlateFound = true;
-        // INSERT ITEM PLATE CREATE THREAD
-        // TODO: NULL CHAR WHEN PRINTING FROM INSERT_ITEM STRING
 
-        initCars();    
-
-        insert_item(plate);
+        // Initialise a thread for a car
+        initCars(carPlate);   
+        // insert_item(plate);
         
         sleep(5);
     }
-
     else {
-        flagPlateFound = false;
+        flagPlateFound = false; 
     }
     // Unlock the mutex protection
     pthread_mutex_unlock(&mutex); 
