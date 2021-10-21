@@ -21,7 +21,7 @@ int main( int argc, char **argv )
     pthread_create(&simulatorThread, NULL, simulatorMain, NULL );
     pthread_create(&managerThread, NULL, managerMain, NULL );
         
-        // Runs both threads
+    // Join runs the thread(function) after it exits once (simulator never exits so we dont have to join, manager exits so we join it)
     pthread_join( simulatorThread, NULL );
     pthread_join( managerThread, NULL );
 

@@ -32,26 +32,26 @@ int generateInRange(int lower, int upper) {
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@BRING BACK@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@BRING BACK@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-// int msSleep (long msec) {
-//     struct timespec ts;
-//     int result;
+int msSleep (long msec) {
+    struct timespec ts;
+    int result;
 
-//     if (msec < 0)
-//     {
-//         errno = EINVAL;
-//         return -1;
-//     }
+    if (msec < 0)
+    {
+        errno = EINVAL;
+        return -1;
+    }
 
-//     ts.tv_sec = msec / 1000;
-//     ts.tv_nsec = (msec % 1000) * 1000000;
+    ts.tv_sec = msec / 1000;
+    ts.tv_nsec = (msec % 1000) * 1000000;
 
-//     do {
-//         // REMOVE SLEEP TO TEST PLATE GENERATION
-//         result = nanosleep(&ts, &ts); 
-//     } while (result && errno == EINTR);
+    do {
+        // REMOVE SLEEP TO TEST PLATE GENERATION
+        result = nanosleep(&ts, &ts); 
+    } while (result && errno == EINTR);
 
-//     return result;
-// }
+    return result;
+}
 
 void *simulatorMain() {
     shared_memory_t shm;
@@ -61,8 +61,11 @@ void *simulatorMain() {
 
     srand(time(NULL));
 
-    pthread_t threadWhileLoop, threadRange;
+    for (int i = 0; i < 5; i++) {
+        level[i] = 0;
+    }
 
+    pthread_t threadWhileLoop, threadRange;
 
     while (1) {
         // Create two threads to be ran simultaneously
@@ -72,10 +75,14 @@ void *simulatorMain() {
         // Runs both threads
         pthread_join( threadWhileLoop, NULL );
         pthread_join( threadRange, NULL );
+        
+
     }
     destroy_shared_object(&shm);
 
     return 0;
     
 }
+
+
 

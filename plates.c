@@ -17,6 +17,7 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 int flag = 0;
 bool flagPlateFound = false;
+bool found = false;
 pthread_mutex_t plateGenerationMutex;
 
 bool checkPlate( char *plate ) {
@@ -26,7 +27,7 @@ bool checkPlate( char *plate ) {
     else {
         printf("\n---------FOUND PLATE---------\n");
         printf("VALID PLATE: %s\n", plate);
-        // exit(0); // -------------COMMENT OUT LATER< THIS IS FOR TESTING
+        // exit(0); // -------------COMMENT OUT LATER THIS IS FOR TESTING
         sleep(3);
         return true;
     }
@@ -37,24 +38,22 @@ bool checkPlate( char *plate ) {
 * GENERATING PLATES TO BE CHECKED
 */
 
-char *generatePlate(  ) {
+bool *generatePlate(char *plate) {
     // Mutex locks to protect the global random
     pthread_mutex_lock(&plateGenerationMutex);
-    char *plate = (char *)malloc(6);
 
-    //------------------------------------------ 50/50
-    // int allowCarCheck = generateInRange(0,1);
+    int allowCarCheck = generateInRange(0,3);
 
-    // if (allowCarCheck == 0)
-    // {
-    //     plate = randLine();
-    //     printf("GET RAND LINE PLATE\n");
-    //     printf("RAND: %s\n", plate);
-    // }
-    // else
-    // {
+    if (allowCarCheck == 0)
+    {
+        // strcpy(plate, randLine());
+        randLine(plate);
+        printf("RAND: %s\n", plate);
+        found = true;
+    }
+    else
+    {
         // Uses current time as the random seed
-        // char *plate = (char *)malloc(6);
         for (int i = 0; i < 3; i++) {
             int randIntNumber = rand();
             int randIntLetter = rand();
@@ -72,10 +71,10 @@ char *generatePlate(  ) {
             plate[i+3] = randLetterConverted;
 
         }
-    // }
+    }
     
     pthread_mutex_unlock(&plateGenerationMutex);
-    return plate;
+    return true;
 }
 
 void *generatePlateTime() {
@@ -93,13 +92,13 @@ void *generatePlateTime() {
 
     // -------------- REMOVE SLEEP TO TEST PLATE GENERATION
     // Generate time  
-    // int plateGenerateTime = generateInRange(1, 100);
-    // int plateGenerateMS;    
+    int plateGenerateTime = generateInRange(1, 100);
+    int plateGenerateMS;    
     // printf("RAND TIME: %d\n", plateGenerateTime); //-- printing rand time
     
     // Calculate sleep for ms
-    // plateGenerateMS = msSleep(plateGenerateTime);
-    // sleep(plateGenerateMS); 
+    plateGenerateMS = msSleep(plateGenerateTime);
+    sleep(plateGenerateMS); 
 
     // Flip while condition for generateCars()
     flag = 1;
@@ -111,47 +110,152 @@ void *generatePlateTime() {
 }
 
 void *generateCars() {
-    char plate[6];
+    char *plate = (char *)malloc(6);
 
     // Lock mutex to protect variables
     pthread_mutex_lock(&mutex);
-
+    
     // Wait for the time till new license plate to be generated
     while (flag == 0) {
         pthread_cond_wait(&cond, &mutex);
     } 
 
+    generatePlate(plate);
     // Generate the plate and assign
-    strcpy(plate, generatePlate());
+    // strcpy(plate, generatePlate());
     printf("%s\n", plate);
 
+    // Once a car reaches the front of the queue, it will wait 2ms before triggering the
+    // entrance LPR.
+    int waitLPR = 2;
+    sleep(msSleep(waitLPR));
+
     // If true save to shared memory entrance LPR 
-    if (checkPlate(plate)) {
-        char carPlate[6];
-        strcpy(carPlate, plate);
+    if (checkPlate(plate) || found) {
+        found = false;
 
         // Randomly generating the entrance check the car will go to (1-5)
         int entranceRand = generateInRange(0, 4);
+        int entranceDiff = 0;
+        int* levelCounter; // TODO: LOCK AND MUTEX AND SHARED MEM THIS SHIT
+
+        // i -> entrance no.
+        // level[i] -> capacity
+        for (int i = 0; i < 5; i++) {
+            if (i == entranceRand) {
+                if (level[i] < MAX_LEVEL_CAPACITY) {
+                    level[i]++;
+                    levelCounter = &level[i];
+                    printf("LEVEL: %d, CAPACITY: %d\n", i, level[i]);
+                }
+                else {
+                    do {
+                        entranceDiff = generateInRange(0,4);       
+                    } 
+                    while (entranceDiff == entranceRand);       
+                    entranceRand = entranceDiff;      
+                }
+            }
+        }
+
+        // switch(entranceRand) 
+        // {
+        //     case 0:
+        //         if(level1 < MAX_LEVEL_CAPACITY) {
+        //             level1++;
+        //             levelCounter = level1;
+        //             printf("Level1: %d\n", level1);
+        //         }
+        //         else {
+        //             do {
+        //                 entranceDiff = generateInRange(0,4);       
+        //             } 
+        //             while (entranceDiff == entranceRand);       
+        //             entranceRand = entranceDiff;      
+        //         }
+        //         break;
+        //     case 1:
+        //         if(level2 < MAX_LEVEL_CAPACITY) {
+        //             level2++; 
+        //             levelCounter = level2;
+        //             printf("Level2: %d\n", level2);
+        //         }
+        //         else {
+        //             do {
+        //                 entranceDiff = generateInRange(0,4);       
+        //             } 
+        //             while (entranceDiff == entranceRand);       
+        //             entranceRand = entranceDiff;      
+        //         }
+        //         break;
+        //     case 2:
+        //         if(level3 < MAX_LEVEL_CAPACITY) {
+        //             level3++; 
+        //             levelCounter = level3;
+        //             printf("Level3: %d\n", level3);
+        //         }
+        //         else {
+        //             do {
+        //                 entranceDiff = generateInRange(0,4);       
+        //             } 
+        //             while (entranceDiff == entranceRand);       
+        //             entranceRand = entranceDiff;      
+        //         }
+        //         break;
+        //     case 3:
+        //         if(level4 < MAX_LEVEL_CAPACITY) {
+        //             level4++; 
+        //             levelCounter = level4;
+        //             printf("Level4: %d\n", level4);
+        //         }
+        //         else {
+        //             do {
+        //                 entranceDiff = generateInRange(0,4);       
+        //             } 
+        //             while (entranceDiff == entranceRand);       
+        //             entranceRand = entranceDiff;      
+        //         }
+        //         break;
+        //     case 4:
+        //         if(level5 < MAX_LEVEL_CAPACITY) {
+        //             level5++;  
+        //             levelCounter = level5;
+        //             printf("Level5: %d\n", level5);
+        //         }
+        //         else {
+        //             do {
+        //                 entranceDiff = generateInRange(0,4);       
+        //             } 
+        //             while (entranceDiff == entranceRand);       
+        //             entranceRand = entranceDiff;      
+        //         }
+        //         break;
+        //     default: 
+        //         printf("ERROR\n");
+        //         break;
+        // }
+
         shared_memory_t shm;
+        // printf("FILE DESCRIPTOR: %d\n",shm.fd);
         get_shared_object(&shm, SHARE_NAME);
         printf("ENTRANCE: %d\n", entranceRand);
 
         // Copies the car plate over to shared memory
-        strcpy(shm.data->entrances[entranceRand].sensor.plate, carPlate);
+        strcpy(shm.data->entrances[entranceRand].sensor.plate, plate);
         
-        // destroy_shared_object(&shm); CHECK
         flagPlateFound = true;
 
         // Initialise a thread for a car
-        initCars(carPlate);   
-        // insert_item(plate);
+        initCars(plate, levelCounter);   
+        // insert_item(plate); 
         
-        sleep(5);
+        sleep(1);
     }
     else {
-        flagPlateFound = false; 
+        flagPlateFound = false;
     }
     // Unlock the mutex protection
     pthread_mutex_unlock(&mutex); 
+    free(plate);
     return 0;
 }

@@ -24,6 +24,8 @@ typedef struct car {
 	int id;
 } car_t;
 
+void *generateCarTime();
+
 // car cars[100];
 
 

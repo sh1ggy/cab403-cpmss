@@ -20,35 +20,44 @@ sem_t full;
 
 int insertPointer = 0, removePointer = 0;
 
+
+void *sleepCarTime( ) {
+	int driveParkingSpaceTime = 10;
+	int parkingTime = 0;
+	int driveExitTime = 10;
+	// TODO: MUTEXES
+    int parkingGenerateTime = generateInRange(100, 10000);
+    // int plateGenerateMS;    
+    // printf("RAND TIME: %d\n", plateGenerateTime); //-- printing rand time
+    
+	sleep(msSleep(driveParkingSpaceTime));
+
+    parkingTime = msSleep(parkingGenerateTime);
+    sleep(parkingTime); 
+	
+	sleep(msSleep(driveExitTime));
+
+    return 0;
+}
+
 void *car(void *param)
 {
-	// buffer_item random;
-	// int r;
-	// long plate;
-	// plate = (long) param;
 
-	char *string = param;
+	sleepCarTime(param);
+	int *level = (int *)param;
+	printf("PASSED FROM INIT INTO CAR THREAD: %d\n", *level);
+	level--;
 
+	printf("DECREMENTED LEVEL: %d\n", *level);
+	// sleep(3);
 	
-	// while (1)
-	// {
-    //     printf("Hello. I am a car!\n");
-	// 	r = rand() % 5;
-	// 	sleep(r);
 
 	for (int x = 0; x < MESSAGE_REPEAT; x++)
     {
-		printf("Thread id is %s, pthread ID - %lu\n", string, pthread_self());
+		// printf("Thread id is %s, pthread ID - %lu\n", string, pthread_self());
         // usleep(100000); //microsleep
     }
-
-	// 	// if (insert_item(&random))
-	// 	// 	fprintf(stderr, "Error Consuming");
-	// 	// else
-	// 	// 	printf("Consumer consumed %d \n", random);
-	// }
 	return 0;
-
 }
 
 int insert_item(char plate[6])
@@ -105,13 +114,15 @@ int insert_item(char plate[6])
 // 	return 0;
 // }
 
-void initCars(char *plate)
+void initCars(char *plate, int *levelCounter)
 {
     //consumerThreads, producerThreads
 	int value1 = 0, value2 = 0;
     pthread_t carsThread;
 
-	char *threadPlateID = plate;
+	printf("INIT CAR LEVEL PASS: %d\n", *levelCounter);
+
+	// char *threadPlateID = plate;
 
 	// pthread_t tid[producerThreads];
 	// pthread_t cid[consumerThreads];
@@ -143,7 +154,9 @@ void initCars(char *plate)
 
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
-	pthread_create(&carsThread, &attr, car, threadPlateID);
+
+	pthread_create(&carsThread, &attr, car, levelCounter);
+	
 
 
 	// }

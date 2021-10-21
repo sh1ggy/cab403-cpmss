@@ -79,7 +79,7 @@ void htab_print(htab_t *h);
  */
 void readPlates( const char * filename, const char * mode );
 
-// char * randLine( );
+bool randLine( char *plate );
 
 // Initialise the hashtable of approved licence plates to look through
 int platesInit(  );
