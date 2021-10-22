@@ -12,6 +12,7 @@
 
 #include "shm.h"
 
+
 bool create_shared_object( shared_memory_t* shm, const char* share_name ) {
     printf("CREATING SHARED MEMORY\n");
     // Remove any previous instance of the shared memory object, if it exists.

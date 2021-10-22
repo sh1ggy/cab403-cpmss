@@ -21,8 +21,10 @@
 #include <sys/stat.h>       
 #include <fcntl.h>      
 
+
 #define PARKING_SIZE 2920
 #define NUM_LEVELS 5
+
 
 int generateInRange(int lower, int upper);
 int msSleep (long msec);
@@ -82,6 +84,7 @@ typedef struct carpark {
     exit_t exits[5];
     level_t levels[5];
 } carpark_t;
+
 
 
 #endif

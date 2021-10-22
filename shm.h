@@ -15,6 +15,10 @@
 
 #define SHARE_NAME "PARKING"
 
+
+#ifndef SHM_H
+#define SHM_H
+
 /**
  * A shared memory control structure.
  */
@@ -30,8 +34,12 @@ typedef struct shared_memory {
 } shared_memory_t;
 
 
+extern shared_memory_t shm;
+
 bool get_shared_object( shared_memory_t* shm, const char* share_name );
 
 bool create_shared_object( shared_memory_t* shm, const char* share_name );
 
 void destroy_shared_object( shared_memory_t* shm );
+
+#endif

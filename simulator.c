@@ -6,8 +6,8 @@
 #include <errno.h>    
 
 #include "cpmss.h"
-#include "simulator.h"
 #include "shm.h"   
+#include "simulator.h"
 #include "lpr.h"
 #include "plates.h"
 #include "cars.h"
@@ -54,8 +54,7 @@ int msSleep (long msec) {
 }
 
 void *simulatorMain() {
-    shared_memory_t shm;
-    create_shared_object( &shm, SHARE_NAME );
+
 
     readPlates("plates.txt", "r");
 
@@ -78,7 +77,6 @@ void *simulatorMain() {
         
 
     }
-    destroy_shared_object(&shm);
 
     return 0;
     

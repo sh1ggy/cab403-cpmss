@@ -12,6 +12,30 @@
 
 int main( int argc, char **argv )
 {     
+    shared_memory_t shm;
+    create_shared_object( &shm, SHARE_NAME );
+    
+    pthread_mutexattr_t attrmutex;
+    pthread_mutexattr_init(&attrmutex);
+    
+    pthread_condattr_t attrcond;
+    pthread_condattr_init(&attrcond);
+    
+
+    for (int i = 0; i < 5; i++) {
+        pthread_mutexattr_setpshared(&attrmutex, PTHREAD_PROCESS_SHARED);
+        pthread_mutex_init(&shm.data->entrances[i].sensor.lock, &attrmutex);
+        pthread_mutex_init(&shm.data->levels[i].sensor.lock, &attrmutex);
+        pthread_mutex_init(&shm.data->exits[i].sensor.lock, &attrmutex);
+
+        pthread_condattr_setpshared(&attrcond, PTHREAD_PROCESS_SHARED);
+        pthread_cond_init(&shm.data->entrances[i].sensor.cond, &attrcond);
+        pthread_cond_init(&shm.data->levels[i].sensor.cond, &attrcond);
+        pthread_cond_init(&shm.data->exits[i].sensor.cond, &attrcond);
+    }
+    
+    
+    
     htab_destroy(&h);
 
     sleep(1);    
@@ -27,4 +51,6 @@ int main( int argc, char **argv )
 
     // simulatorMain();
     // managerMain();
+    destroy_shared_object(&shm);
+
 }

@@ -10,7 +10,7 @@
 #include "simulator.h"
 #include "plates.h"
 #include "lpr.h"
-// #include "shm.h"
+#include "shm.h"
 
 typedef int buffer_item;
 #define BUFFER_SIZE 5
@@ -19,10 +19,6 @@ typedef int buffer_item;
 
 // }
 
-typedef struct car {
-	char plate;
-	int id;
-} car_t;
 
 void *generateCarTime();
 
@@ -32,10 +28,12 @@ void *generateCarTime();
 // cars[0].plate -> 
 
 //worker
-void *car(void *param);
+void *car();
 
 int insert_item(char plate[6]);
 // int remove_item(buffer_item *item);
-void initCars();
+void initCars(char *plate, int entrance, int *levelCounter);
+
+void sleepCarTime();
 
 
