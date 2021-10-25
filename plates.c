@@ -43,7 +43,7 @@ bool *generatePlate(char *plate) {
     // Mutex locks to protect the global random
     pthread_mutex_lock(&plateGenerationMutex);
 
-    int allowCarCheck = generateInRange(0,2);
+    int allowCarCheck = generateInRange(0,1);
 
     if (allowCarCheck == 0)
     {
@@ -144,28 +144,36 @@ void *generateCars() {
 
         // Randomly generating the entrance check the car will go to (1-5)
         int entranceDiff = 0;
-        int* levelCounter = 0; // TODO: LOCK AND MUTEX AND SHARED MEM THIS SHIT
+        int* levelCounter; // TODO: LOCK AND MUTEX AND SHARED MEM THIS SHIT
+        // int levelGenFlag = 0;
 
         // i -> entrance no.
         // level[i] -> capacity
-        for (int i = 0; i < 5; i++) {
-            if (i == levelRand) {
-                if (level[i] < MAX_LEVEL_CAPACITY) {
-                    level[i]++;
-                    levelCounter = &level[i];
-                    printf("LEVEL: %d, CAPACITY: %d\n", i, level[i]);
-                }
-                else {
-                    // INFO SIGN 'F'
-                    do {
-                        entranceDiff = generateInRange(0,4);       
-                    } 
-                    while (entranceDiff == levelRand);       
-                    levelRand = entranceDiff;      
+        // do {
+            for (int i = 0; i < 5; i++) {
+                if (i == levelRand) {
+                    if (level[i] < MAX_LEVEL_CAPACITY) {
+                        level[i]++;
+                        levelCounter = &level[i];
+                        // levelGenFlag = 1;
+                        // printf("LEVEL: %d, CAPACITY: %d\n", i+1, level[i]);
+                    }
+                    else {
+                        // INFO SIGN 'F'
+                        do {
+                            entranceDiff = generateInRange(0,4);   
+                        } 
+                        while (entranceDiff == levelRand);       
+                        levelRand = entranceDiff;
+                        level[levelRand]++;
+                        levelCounter = &level[levelRand];
+                        // printf("LEVEL: %d, CAPACITY: %d\n", levelRand+1, level[levelRand]);         
+                    }
                 }
             }
-        }
-
+        // }
+        // while (flag == 0);
+    
 
         // shared_memory_t shm;
         // printf("FILE DESCRIPTOR: %d\n",shm.fd);
@@ -183,7 +191,7 @@ void *generateCars() {
 
         pthread_mutex_lock(&shm.data->entrances[entranceRand].sensor.lock);
 
-        initCars(plate, entranceRand, levelCounter);   
+        initCars(plate, entranceRand);   
     
         pthread_mutex_unlock(&shm.data->entrances[entranceRand].sensor.lock);
         

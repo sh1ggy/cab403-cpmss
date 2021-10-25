@@ -32,7 +32,7 @@ void *car();
 
 int insert_item(char plate[6]);
 // int remove_item(buffer_item *item);
-void initCars(char *plate, int entrance, int *levelCounter);
+void initCars(char *plate, int entrance); //, int *levelCounter
 
 void sleepCarTime();
 

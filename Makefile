@@ -26,6 +26,9 @@ clean:
 	rm -f cpmss *.o
 
 run: 
-	valgrind --track-origins=yes ./cpmss 
+	./cpmss 
 
+dev: 
+	valgrind --track-origins=yes ./cpmss
+	
 .PHONY: all clean # specifying that these are commands 

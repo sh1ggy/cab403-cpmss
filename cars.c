@@ -18,9 +18,9 @@ sem_t empty;
 sem_t full;
 #define MESSAGE_REPEAT 20
 typedef struct cars {
-	char *plate;
+	char plate[6];
 	int entrance;
-	int *levelCounter;
+	// int *levelCounter;
 } cars_t;
 
 int insertPointer = 0, removePointer = 0;
@@ -29,11 +29,7 @@ void sleepCarTime( ) {
 	int driveParkingSpaceTime = 10;
 	int parkingTime = 0;
 	int driveExitTime = 10;
-	// TODO: MUTEXES
-    int parkingGenerateTime = generateInRange(1, 20);
-    // int plateGenerateMS;    
-    // printf("RAND TIME: %d\n", plateGenerateTime); //-- printing rand time
-    
+    int parkingGenerateTime = generateInRange(100, 10000);
 	sleep(msSleep(driveParkingSpaceTime));
 
     parkingTime = msSleep(parkingGenerateTime);
@@ -41,26 +37,27 @@ void sleepCarTime( ) {
 	
 	sleep(msSleep(driveExitTime));
 
-    return 0;
+    return;
 }
 
 void *car(void *params)
 {
 	sleepCarTime();
+	cars_t *carThreadParams = params;
 
-
-	// strcpy(shm.data->exits[entrance].sensor.plate, plate);
-	cars_t carThreadParams = *(cars_t *) params;
-	//  printf("PASSED FROM INIT INTO CAR THREAD: %d\n", *hold);
-	// hold--;
-	printf("-------------- BEFORE-- CAR THREAD PLATE: %s, CAR THREAD EXIT: %d\n", carThreadParams.plate, carThreadParams.entrance);
-
-	// printf("DECREMENTED LEVEL: %d\n", *hold);
-	char *plate = carThreadParams.plate;
-	int exit = carThreadParams.entrance;
-	printf("CAR THREAD PLATE: %s, CAR THREAD EXIT: %d\n", plate, exit);
+	char *plate = carThreadParams->plate;
+	int exit = carThreadParams->entrance;
+	// int levelCounter = *carThreadParams->levelCounter;
+	
+	// printf("AFTER ----------- CAR THREAD PLATE: %s, CAR THREAD EXIT: %d, CAR THREAD LEVEL COUNTER: %d\n", plate, exit, levelCounter);
+	pthread_mutex_lock(&shm.data->exits[exit].sensor.lock);
 	strcpy(shm.data->exits[exit].sensor.plate, plate);
+	// *carThreadParams->levelCounter--;
+	level[exit]--;
+	
+	pthread_mutex_unlock(&shm.data->exits[exit].sensor.lock);
 
+	free(carThreadParams);
 	return 0;
 }
 
@@ -76,7 +73,7 @@ int insert_item(char plate[6])
 	pthread_mutex_lock(&mutex);
 	sem_getvalue(&empty, &val1);
 
-    printf("\nCAR PLATE: %s\n", carPlate);
+    // printf("\nCAR PLATE: %s\n", carPlate);
 	//Release mutex lock and full semaphore
 	pthread_mutex_unlock(&mutex);
 	sem_post(&full);
@@ -111,20 +108,23 @@ int insert_item(char plate[6])
 // 	return 0;
 // }
 
-void initCars(char *plate, int entrance, int *levelCounter)
+void initCars(char *plate, int entrance) //, int *levelCounter
 {
 
     //consumerThreads, producerThreads
 	// int value1 = 0, value2 = 0;
     pthread_t carsThread;
 
-	cars_t carThreadParams;
-	carThreadParams.plate = plate;
-	carThreadParams.entrance = entrance;
-	carThreadParams.levelCounter = levelCounter;
-	printf("CAR INIT PLATE: %s, CAR INIT ENTRANCE: %d\n", plate, entrance + 1);
+	// cars_t *carThreadParams;
+	cars_t *carThreadParams = malloc(sizeof(cars_t));
+	// carThreadParams->plate = plate;
+	strcpy(carThreadParams->plate, plate);
+	carThreadParams->entrance = entrance;
+	// carThreadParams->levelCounter = levelCounter;
+	
+	// printf("CAR INIT PLATE: %s, CAR INIT ENTRANCE: %d, CAR INIT COUNTER: %d\n", carThreadParams->plate, carThreadParams->entrance, *carThreadParams->levelCounter);
 
-	// char *threadPlateID = plate;
+	// char *threadPlateID = plate; 
 
 	//Initialize the the locks
 	pthread_mutex_init(&mutex, NULL);
@@ -143,20 +143,16 @@ void initCars(char *plate, int entrance, int *levelCounter)
 	// printf("INIT CAR LEVEL CAPACITY FROM ARRY: %d\n", level[entrance]--);
 
 
-	pthread_mutex_lock(&mutex);
 
-	pthread_create(&carsThread, NULL, car, &carThreadParams);
+	pthread_create(&carsThread, NULL, car, (void *)carThreadParams);
 
-	// sleep(10);
 	// *levelCounter--;
 
 	// printf("DECREMENTED LEVEL: %d\n", *levelCounter);
 	
-	pthread_mutex_unlock(&mutex);
 	
 	// level[entrance]--;
 
 	// }
-
 	return;
 }
