@@ -13,23 +13,42 @@
 #include "cars.h"
 
 buffer_item buffer[BUFFER_SIZE];
-pthread_mutex_t mutex;
+pthread_mutex_t fileLock;
 sem_t empty;
 sem_t full;
-#define MESSAGE_REPEAT 20
+
+#define DRIVE_TO_PARKING_TIME 10
+#define DRIVE_TO_EXIT_TIME 10
+#define BILLING_RATE 0.05
 typedef struct cars {
 	char plate[6];
 	int entrance;
-	// int *levelCounter;
 } cars_t;
 
 int insertPointer = 0, removePointer = 0;
 
-void sleepCarTime( ) {
-	int driveParkingSpaceTime = 10;
+void calcBill(int totalCarTime, char *plate) {
+	double totalBill = totalCarTime * BILLING_RATE;
+	carBill += totalBill;
+	createBillingFile(plate, totalBill);
+}
+
+void createBillingFile(char *plate, double totalBill) {
+	pthread_mutex_lock(&fileLock);
+	FILE *fp = fopen("billing.txt", "a");
+	fprintf(fp, "%s $%.2f\n", plate, totalBill);
+	fclose(fp);
+	pthread_mutex_unlock(&fileLock);
+}
+
+// DO WORK
+int sleepCarTime( ) {
+	int driveParkingSpaceTime = DRIVE_TO_PARKING_TIME;
 	int parkingTime = 0;
-	int driveExitTime = 10;
+	int driveExitTime = DRIVE_TO_EXIT_TIME;
     int parkingGenerateTime = generateInRange(100, 10000);
+	int totalCarTime = driveParkingSpaceTime + parkingGenerateTime + driveExitTime;
+	
 	sleep(msSleep(driveParkingSpaceTime));
 
     parkingTime = msSleep(parkingGenerateTime);
@@ -37,87 +56,43 @@ void sleepCarTime( ) {
 	
 	sleep(msSleep(driveExitTime));
 
-    return;
+    return totalCarTime;
 }
 
 void *car(void *params)
 {
-	sleepCarTime();
 	cars_t *carThreadParams = params;
 
 	char *plate = carThreadParams->plate;
+	calcBill(sleepCarTime(), plate);	
 	int exit = carThreadParams->entrance;
-	// int levelCounter = *carThreadParams->levelCounter;
-	
-	// printf("AFTER ----------- CAR THREAD PLATE: %s, CAR THREAD EXIT: %d, CAR THREAD LEVEL COUNTER: %d\n", plate, exit, levelCounter);
-	pthread_mutex_lock(&shm.data->exits[exit].sensor.lock);
-	strcpy(shm.data->exits[exit].sensor.plate, plate);
-	
+
+	pthread_mutex_lock(&shm.data->exits[exit].gate.lock);
+	strcpy(shm.data->exits[exit].sensor.plate, plate);	
 	shm.data->exits[exit].gate.status = 'R';
 	sleep(msSleep(10));
+	pthread_mutex_unlock(&shm.data->exits[exit].gate.lock);
 
+	pthread_mutex_lock(&shm.data->exits[exit].gate.lock);
 	shm.data->exits[exit].gate.status = 'O';
 	sleep(msSleep(20));
+	pthread_mutex_unlock(&shm.data->exits[exit].gate.lock);
 
+	pthread_mutex_lock(&shm.data->exits[exit].gate.lock);
 	shm.data->exits[exit].gate.status = 'L';
 	sleep(msSleep(10));
+	pthread_mutex_unlock(&shm.data->exits[exit].gate.lock);
 
+	pthread_mutex_lock(&shm.data->exits[exit].gate.lock);
 	shm.data->exits[exit].gate.status = 'C';
+	pthread_mutex_unlock(&shm.data->exits[exit].gate.lock);
 
 	level[exit]--;
 
-	pthread_mutex_unlock(&shm.data->exits[exit].sensor.lock);
 
 	free(carThreadParams);
 	return 0;
 }
-
-int insert_item(char plate[6])
-{
-	int value = 0, val1 = 0;
-    char carPlate[6];
-    strncpy(carPlate, plate, 6);
-	//Acquire Empty Semaphore
-	sem_wait(&empty);
-
-	//Acquire mutex lock to protect buffer
-	pthread_mutex_lock(&mutex);
-	sem_getvalue(&empty, &val1);
-
-    // printf("\nCAR PLATE: %s\n", carPlate);
-	//Release mutex lock and full semaphore
-	pthread_mutex_unlock(&mutex);
-	sem_post(&full);
-	sem_getvalue(&full, &value);
-
-    sleep(5);
-
-	return 0;
-}
-
-// int remove_item(buffer_item *item)
-// {
-// 	int fullSem = 0, emptySem = 0;
-// 	//Acquire Full Semaphore
-// 	sem_wait(&full);
-
-// 	//Acquire mutex lock to protect buffer
-// 	pthread_mutex_lock(&mutex);
-// 	sem_getvalue(&full, &fullSem);
-// 	printf("Currently consuming - Semaphore full value = %d", value);
-//     // ----------------------- CHANGE
-// 	*item = buffer[removePointer];
-// 	buffer[removePointer++] = -1;
-// 	removePointer = removePointer % BUFFER_SIZE;
-
-// 	//Release mutex lock and empty semaphore
-// 	pthread_mutex_unlock(&mutex);
-// 	sem_post(&empty);
-// 	sem_getvalue(&empty, &emptySem);
-// 	printf("\nFinished consuming - Semaphore empty value = %d\n", val1);
-
-// 	return 0;
-// }
 
 void initCars(char *plate, int entrance) //, int *levelCounter
 {
@@ -138,7 +113,7 @@ void initCars(char *plate, int entrance) //, int *levelCounter
 	// char *threadPlateID = plate; 
 
 	//Initialize the the locks
-	pthread_mutex_init(&mutex, NULL);
+	pthread_mutex_init(&fileLock, NULL);
 	// sem_init(&empty, 0, BUFFER_SIZE);
 	// sem_init(&full, 0, 0);
 	

@@ -6,6 +6,7 @@
 #include "cpmss.h"
 #include "shm.h"
 #include "plates.h"
+#include "cars.h"
 
 shared_memory_t shm;
 
@@ -14,33 +15,15 @@ void *managerMain()
     get_shared_object(&shm, SHARE_NAME);
     while (1)
     {
+        fflush(0);
         if (flagPlateFound)
         {
-            // printf("\nHello! I am the manager.\n");
-            // printf("FILE DESCRIPTOR: %d\n",shm.fd);
-            // printf("ENTRANCE 1 -> PLATE: %s\n", shm.data->entrances[0].sensor.plate);
-            // printf("ENTRANCE 2 -> PLATE: %s\n", shm.data->entrances[1].sensor.plate);
-            // printf("ENTRANCE 3 -> PLATE: %s\n", shm.data->entrances[2].sensor.plate);
-            // printf("ENTRANCE 4 -> PLATE: %s\n", shm.data->entrances[3].sensor.plate);
-            // printf("ENTRANCE 5 -> PLATE: %s\n", shm.data->entrances[4].sensor.plate);
-
-            // printf("LEVEL 1 -> LPR -> PLATE: %s\n", shm.data->levels[0].sensor.plate);
-            // printf("LEVEL 2 -> LPR -> PLATE: %s\n", shm.data->levels[1].sensor.plate);
-            // printf("LEVEL 3 -> LPR -> PLATE: %s\n", shm.data->levels[2].sensor.plate);
-            // printf("LEVEL 4 -> LPR -> PLATE: %s\n", shm.data->levels[3].sensor.plate);
-            // printf("LEVEL 5 -> LPR -> PLATE: %s\n", shm.data->levels[4].sensor.plate);
-
-            // printf("LEVEL 1 -> EXIT 1 -> LPR -> PLATE: %s\n", shm.data->exits[0].sensor.plate);
-            // printf("LEVEL 2 -> EXIT 2 -> LPR -> PLATE: %s\n", shm.data->exits[1].sensor.plate);
-            // printf("LEVEL 3 -> EXIT 3 -> LPR -> PLATE: %s\n", shm.data->exits[2].sensor.plate);
-            // printf("LEVEL 4 -> EXIT 4 -> LPR -> PLATE: %s\n", shm.data->exits[3].sensor.plate);
-            // printf("LEVEL 5 -> EXIT 5 -> LPR -> PLATE: %s\n", shm.data->exits[4].sensor.plate);
-
             printf("----------------ENTRANCES----------------\n");
             for (int i = 0; i < 5; i++)
             {
                 pthread_mutex_lock(&shm.data->entrances[i].sensor.lock);
-                printf("%d - PLATE: %s, BOOM GATE: %c\n", i+1, shm.data->entrances[i].sensor.plate, shm.data->entrances[i].gate.status);
+                // sleep(msSleep(20));
+                printf("%d - PLATE: %s BOOM GATE: %c INFO: %c\n", i+1, shm.data->entrances[i].sensor.plate, shm.data->entrances[i].gate.status, shm.data->entrances[i].sign.status);
                 pthread_mutex_unlock(&shm.data->entrances[i].sensor.lock);
             }
 
@@ -48,7 +31,8 @@ void *managerMain()
             for (int i = 0; i < 5; i++)
             {
                 pthread_mutex_lock(&shm.data->levels[i].sensor.lock);
-                printf("%d - PLATE: %s, CAPACITY: %d\n", i+1, shm.data->levels[i].sensor.plate, level[i]);
+                // sleep(msSleep(20));
+                printf("%d - PLATE: %s CAPACITY: %d\n", i+1, shm.data->levels[i].sensor.plate, level[i]);
                 pthread_mutex_unlock(&shm.data->levels[i].sensor.lock);
             }
 
@@ -56,17 +40,18 @@ void *managerMain()
             for (int i = 0; i < 5; i++)
             {
                 pthread_mutex_lock(&shm.data->exits[i].sensor.lock);
-                printf("%d - PLATE: %s, BOOM GATE: %c\n", i+1, shm.data->levels[i].sensor.plate, shm.data->exits[i].gate.status);
+                // sleep(msSleep(20));
+                printf("%d - PLATE: %s BOOM GATE: %c\n", i+1, shm.data->levels[i].sensor.plate, shm.data->exits[i].gate.status);
                 pthread_mutex_unlock(&shm.data->exits[i].sensor.lock);
             }
 
-            // for (int i = 0; i < 5; i++)
-            // {
-            //     printf("LEVEL %d CAR CAPACITY: %d\n", i + 1, level[i]);
-            // }
+            printf("----------------TOTAL BILL----------------\n");
+            // sleep(msSleep(20));
+            printf("$%.2f\n", carBill);
 
-            sleep(msSleep(200)); // TODO: MUTEX
+            sleep(msSleep(50)); 
             system("clear");
+
         }
     }
     return 0;

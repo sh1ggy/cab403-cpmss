@@ -22,7 +22,7 @@ int level[5];
 
 bool checkPlate( char plate[6] );
 
-bool *generatePlate(  );
+void *generatePlate(  );
 
 void *generatePlateTime();
 

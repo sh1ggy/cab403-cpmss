@@ -163,6 +163,7 @@ bool randLine ( char *plate ) {
     char buffer[256]; /* or other suitable maximum line size */
     while (fgets(buffer, sizeof buffer, fp) != NULL) /* read a line */
     {
+        buffer[strcspn(buffer, "\n")] = 0;
         if (count == line)
         {
             fclose(fp);

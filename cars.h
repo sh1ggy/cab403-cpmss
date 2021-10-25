@@ -15,25 +15,17 @@
 typedef int buffer_item;
 #define BUFFER_SIZE 5
 
-// typedef struct threadpool {
+double carBill;
 
-// }
 
+void calcBill(int totalCarTime, char *plate);
 
 void *generateCarTime();
 
-// car cars[100];
-
-
-// cars[0].plate -> 
-
-//worker
 void *car();
 
-int insert_item(char plate[6]);
-// int remove_item(buffer_item *item);
 void initCars(char *plate, int entrance); //, int *levelCounter
 
-void sleepCarTime();
+int sleepCarTime();
 
-
+void createBillingFile(char *plate, double totalBill);

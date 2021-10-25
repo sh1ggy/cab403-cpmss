@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -20,6 +21,7 @@ bool flagPlateFound = false;
 bool found = false;
 shared_memory_t shm;
 pthread_mutex_t plateGenerationMutex;
+#define CHECK_TIME 2
 
 bool checkPlate( char *plate ) {
     if (htab_find(&h, plate) == NULL) {
@@ -39,7 +41,7 @@ bool checkPlate( char *plate ) {
 * GENERATING PLATES TO BE CHECKED
 */
 
-bool *generatePlate(char *plate) {
+void *generatePlate(char *plate) {
     // Mutex locks to protect the global random
     pthread_mutex_lock(&plateGenerationMutex);
 
@@ -75,7 +77,7 @@ bool *generatePlate(char *plate) {
     }
     
     pthread_mutex_unlock(&plateGenerationMutex);
-    return true;
+    return 0;
 }
 
 void *generatePlateTime() {
@@ -115,30 +117,30 @@ void *generateCars() {
         pthread_cond_wait(&cond, &mutex);
     } 
 
-    generatePlate(plate);
     // Generate the plate and assign
-    // strcpy(plate, generatePlate());
-    // printf("%s\n", plate);
-
-    // shared_memory_t shm;
-    // get_shared_object(&shm, SHARE_NAME);
+    generatePlate(plate);
 
     int entranceRand = generateInRange(0, 4);
 
+	pthread_mutex_lock(&shm.data->entrances[entranceRand].gate.lock);
     shm.data->entrances[entranceRand].gate.status = 'C';
+	pthread_mutex_unlock(&shm.data->entrances[entranceRand].gate.lock);
+
+	pthread_mutex_lock(&shm.data->exits[entranceRand].gate.lock);
+    shm.data->exits[entranceRand].gate.status = 'C';
+    pthread_mutex_unlock(&shm.data->exits[entranceRand].gate.lock);
     
     pthread_mutex_lock(&shm.data->entrances[entranceRand].sensor.lock);
-
     strcpy(shm.data->entrances[entranceRand].sensor.plate, plate);
-    
     pthread_mutex_unlock(&shm.data->entrances[entranceRand].sensor.lock);
 
-    // Once a car reaches the front of the queue, it will wait 2ms before triggering the
-    // entrance LPR.
-    int waitLPR = 2;
-    sleep(msSleep(waitLPR));
+    // Once a car reaches the front of the queue, it will wait 2ms before triggering the entrance LPR.
+    sleep(msSleep(CHECK_TIME));
 
     int levelRand = entranceRand;
+
+    char levelRandChar = levelRand + 1 + '0';
+    shm.data->entrances[entranceRand].sign.status = levelRandChar;
     // If true save to shared memory entrance LPR 
     if (found) {
         // || checkplate(plate)
@@ -146,8 +148,6 @@ void *generateCars() {
 
         // Randomly generating the entrance check the car will go to (1-5)
         int entranceDiff = 0;
-        int* levelCounter; // TODO: LOCK AND MUTEX AND SHARED MEM THIS SHIT
-        // int levelGenFlag = 0;
 
         // i -> entrance no.
         // level[i] -> capacity
@@ -156,19 +156,17 @@ void *generateCars() {
                 if (i == levelRand) {
                     if (level[i] < MAX_LEVEL_CAPACITY) {
                         level[i]++;
-                        levelCounter = &level[i];
-                        // levelGenFlag = 1;
                         // printf("LEVEL: %d, CAPACITY: %d\n", i+1, level[i]);
                     }
                     else {
                         // INFO SIGN 'F'
+                        shm.data->entrances[entranceRand].sign.status = 'F';
                         do {
                             entranceDiff = generateInRange(0,4);   
                         } 
                         while (entranceDiff == levelRand);       
                         levelRand = entranceDiff;
                         level[levelRand]++;
-                        levelCounter = &level[levelRand];
                         // printf("LEVEL: %d, CAPACITY: %d\n", levelRand+1, level[levelRand]);         
                     }
                 }
@@ -203,7 +201,9 @@ void *generateCars() {
     }
     else {
         flagPlateFound = false;
+        
         // INFO SIGN 'X'
+        shm.data->entrances[entranceRand].sign.status = 'X';
 
     }
     

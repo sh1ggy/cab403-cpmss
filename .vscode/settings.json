@@ -8,6 +8,7 @@
         "type_traits": "c",
         "xlocnum": "c",
         "xtr1common": "c",
-        "shm.h": "c"
+        "shm.h": "c",
+        "plates.h": "c"
     }
 }
