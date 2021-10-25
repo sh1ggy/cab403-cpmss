@@ -52,9 +52,20 @@ void *car(void *params)
 	// printf("AFTER ----------- CAR THREAD PLATE: %s, CAR THREAD EXIT: %d, CAR THREAD LEVEL COUNTER: %d\n", plate, exit, levelCounter);
 	pthread_mutex_lock(&shm.data->exits[exit].sensor.lock);
 	strcpy(shm.data->exits[exit].sensor.plate, plate);
-	// *carThreadParams->levelCounter--;
-	level[exit]--;
 	
+	shm.data->exits[exit].gate.status = 'R';
+	sleep(msSleep(10));
+
+	shm.data->exits[exit].gate.status = 'O';
+	sleep(msSleep(20));
+
+	shm.data->exits[exit].gate.status = 'L';
+	sleep(msSleep(10));
+
+	shm.data->exits[exit].gate.status = 'C';
+
+	level[exit]--;
+
 	pthread_mutex_unlock(&shm.data->exits[exit].sensor.lock);
 
 	free(carThreadParams);

@@ -46,7 +46,7 @@ typedef struct lpr_sensor {
 typedef struct boom_gate {
     pthread_mutex_t lock; //40 bytes
     pthread_cond_t cond; //48 bytes
-    char status[1]; //1 byte
+    char status; //1 byte
     char padding[7]; //9 bytes
 } boom_gate_t;
 
@@ -54,7 +54,7 @@ typedef struct boom_gate {
 typedef struct information_sign {
     pthread_mutex_t lock; //40 bytes
     pthread_cond_t cond; //48 bytes
-    char status[1]; //1 byte
+    char status; //1 byte
     char padding[7]; //7 bytes
 } information_sign_t;
 

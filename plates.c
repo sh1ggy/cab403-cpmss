@@ -124,6 +124,8 @@ void *generateCars() {
     // get_shared_object(&shm, SHARE_NAME);
 
     int entranceRand = generateInRange(0, 4);
+
+    shm.data->entrances[entranceRand].gate.status = 'C';
     
     pthread_mutex_lock(&shm.data->entrances[entranceRand].sensor.lock);
 
@@ -173,35 +175,38 @@ void *generateCars() {
             }
         // }
         // while (flag == 0);
-    
-
-        // shared_memory_t shm;
-        // printf("FILE DESCRIPTOR: %d\n",shm.fd);
-        // get_shared_object(&shm, SHARE_NAME);
-        // printf("LEVEL: %d\n", levelRand);
 
         // Copies the car plate over to shared memory
-        // strcpy(shm.data->entrances[levelRand].sensor.plate, plate);
         strcpy(shm.data->levels[levelRand].sensor.plate, plate);
 
         flagPlateFound = true;
 
-        // Initialise a thread for a car
-        //@@@@@@@@@@@@@@@@@@@@ BRING BACK@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        // BOOM GATE HERE @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        shm.data->entrances[entranceRand].gate.status = 'R';
+        sleep(msSleep(10));
+        // boomgate character status
+
+        shm.data->entrances[entranceRand].gate.status = 'O';
+        sleep(msSleep(20));
 
         pthread_mutex_lock(&shm.data->entrances[entranceRand].sensor.lock);
 
         initCars(plate, entranceRand);   
     
         pthread_mutex_unlock(&shm.data->entrances[entranceRand].sensor.lock);
+
+        shm.data->entrances[entranceRand].gate.status = 'L';
+        sleep(msSleep(10));
+
+        shm.data->entrances[entranceRand].gate.status = 'C';
         
-        // sleep(1);
     }
     else {
         flagPlateFound = false;
         // INFO SIGN 'X'
 
     }
+    
     // Unlock the mutex protection
     pthread_mutex_unlock(&mutex); 
     free(plate);
