@@ -27,10 +27,10 @@
 #define PARKING_SIZE 2920
 #define NUM_LEVELS 5
 
-
 int generateInRange(int lower, int upper);
 int msSleep (long msec);
 
+extern bool flagTempGenerated;
 /**
 * STRUCTS & SHARED MEMORY
 */

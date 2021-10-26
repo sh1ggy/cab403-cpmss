@@ -27,23 +27,21 @@ int main( int argc, char **argv )
         pthread_cond_init(&shm.data->exits[i].sensor.cond, &attrcond);
     }
     
-    
-    
     htab_destroy(&h);
 
     sleep(1);    
 
-    pthread_t simulatorThread, managerThread;
+    pthread_t simulatorThread, managerThread, fireAlarmThread;
 
     pthread_create(&simulatorThread, NULL, simulatorMain, NULL );
     pthread_create(&managerThread, NULL, managerMain, NULL );
-        
+    // pthread_create(&fireAlarmThread, NULL, fireAlarmMain, NULL );
+
     // Join runs the thread(function) after it exits once (simulator never exits so we dont have to join, manager exits so we join it)
     pthread_join( simulatorThread, NULL );
     pthread_join( managerThread, NULL );
+    // pthread_join( fireAlarmThread, NULL );
 
-    // simulatorMain();
-    // managerMain();
     destroy_shared_object(&shm);
 
 }

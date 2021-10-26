@@ -32,7 +32,7 @@ void *managerMain()
             {
                 pthread_mutex_lock(&shm.data->levels[i].sensor.lock);
                 // sleep(msSleep(20));
-                printf("%d - PLATE: %s CAPACITY: %d\n", i+1, shm.data->levels[i].sensor.plate, level[i]);
+                printf("%d - PLATE: %s CAPACITY: %d TEMP: %hu\n", i+1, shm.data->levels[i].sensor.plate, level[i], shm.data->levels[i].temperature_sensor);
                 pthread_mutex_unlock(&shm.data->levels[i].sensor.lock);
             }
 
@@ -46,12 +46,11 @@ void *managerMain()
             }
 
             printf("----------------TOTAL BILL----------------\n");
-            // sleep(msSleep(20));
+            sleep(msSleep(20));
             printf("$%.2f\n", carBill);
 
             sleep(msSleep(50)); 
-            system("clear");
-
+            // system("clear");
         }
     }
     return 0;

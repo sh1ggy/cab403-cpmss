@@ -3,12 +3,15 @@
 #include "lpr.h"
 #include "shm.h"
 #include "cars.h"
+#include "cpmss.h"
 
 /* global mutex for our program. */
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 int flag = 0;
 bool flagPlateFound = false;
+bool flagTempGenerated = false;
+
 bool found = false;
 shared_memory_t shm;
 pthread_mutex_t plateGenerationMutex;
@@ -97,6 +100,18 @@ void *generatePlateTime() {
     return 0;
 }
 
+void *generateTemp() {
+    int tempSleepTime = generateInRange(1,5);
+    sleep(msSleep(tempSleepTime));
+    
+    for (int i = 0; i < NUM_LEVELS; i++) {
+        int temperatureRand = generateInRange(56,70);
+        shm.data->levels[i].temperature_sensor = temperatureRand;
+    }
+    flagTempGenerated = true;
+    return 0;
+}
+
 void *generateCars() {
     char *plate = (char *)calloc(6, sizeof(char));
 
@@ -111,7 +126,7 @@ void *generateCars() {
     // Generate the plate and assign
     generatePlate(plate);
 
-    int entranceRand = generateInRange(0, 4);
+    int entranceRand = generateInRange(0, NUM_LEVELS-1);
 
 	// BOOM GATE
 	pthread_mutex_lock(&shm.data->entrances[entranceRand].gate.lock);
@@ -147,7 +162,7 @@ void *generateCars() {
         // i -> entrance no.
         // level[i] -> capacity
         // do {
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < NUM_LEVELS; i++) {
                 if (i == levelRand) {
                     if (level[i] < MAX_LEVEL_CAPACITY) {
                         level[i]++;

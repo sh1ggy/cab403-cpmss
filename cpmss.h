@@ -20,3 +20,5 @@
 void *managerMain ( );
 
 void *simulatorMain ( );
+
+int fireAlarmMain ( );

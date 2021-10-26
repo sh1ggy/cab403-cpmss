@@ -29,5 +29,7 @@ void *scanningCars();
 
 void *generateCars();
 
+// MOVE THIS TO MORE APPROPRIATE PLACE
+void *generateTemp();
 
 

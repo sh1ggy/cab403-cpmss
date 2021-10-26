@@ -33,8 +33,6 @@ int msSleep (long msec) {
 }
 
 void *simulatorMain() {
-
-
     readPlates("plates.txt", "r");
 
     srand(time(NULL));
@@ -43,18 +41,18 @@ void *simulatorMain() {
         level[i] = 0;
     }
 
-    pthread_t threadWhileLoop, threadRange;
+    pthread_t threadWhileLoop, threadRange, threadTemp;
 
     while (1) {
         // Create two threads to be ran simultaneously
         pthread_create(&threadWhileLoop, NULL, generateCars, NULL );
         pthread_create(&threadRange, NULL, generatePlateTime, NULL);
-        
+        pthread_create(&threadTemp, NULL, generateTemp, NULL);
+
         // Runs both threads
         pthread_join( threadWhileLoop, NULL );
         pthread_join( threadRange, NULL );
-        
-
+        pthread_join( threadTemp, NULL );
     }
 
     return 0;
