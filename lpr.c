@@ -1,10 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "lpr.h"
 #include "simulator.h"
 
 // Setting number of buckets to 100
-#define BUCKETS_SIZE 1421
+#define BUCKETS_SIZE 100
 size_t buckets = BUCKETS_SIZE;
 
 void item_print(item_t *i)

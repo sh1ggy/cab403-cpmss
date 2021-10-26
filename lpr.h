@@ -4,8 +4,6 @@
 #include <stdlib.h>   // for malloc(), free(), NULL
 #include <string.h>   // for strcmp()
 
-
-
 #ifndef LPR_H
 #define LPR_H
 // An item inserted into a hash table.

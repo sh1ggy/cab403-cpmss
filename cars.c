@@ -1,11 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <pthread.h>
-#include <errno.h> 
-#include <unistd.h>   
-
 #include "simulator.h"
 #include "plates.h"
 #include "lpr.h"
@@ -17,9 +9,6 @@ pthread_mutex_t fileLock;
 sem_t empty;
 sem_t full;
 
-#define DRIVE_TO_PARKING_TIME 10
-#define DRIVE_TO_EXIT_TIME 10
-#define BILLING_RATE 0.05
 typedef struct cars {
 	char plate[6];
 	int entrance;
@@ -62,25 +51,26 @@ int sleepCarTime( ) {
 void *car(void *params)
 {
 	cars_t *carThreadParams = params;
-
+	
 	char *plate = carThreadParams->plate;
 	calcBill(sleepCarTime(), plate);	
 	int exit = carThreadParams->entrance;
 
+	// BOOM GATE
 	pthread_mutex_lock(&shm.data->exits[exit].gate.lock);
 	strcpy(shm.data->exits[exit].sensor.plate, plate);	
 	shm.data->exits[exit].gate.status = 'R';
-	sleep(msSleep(10));
+	sleep(msSleep(RAISE_TIME));
 	pthread_mutex_unlock(&shm.data->exits[exit].gate.lock);
 
 	pthread_mutex_lock(&shm.data->exits[exit].gate.lock);
 	shm.data->exits[exit].gate.status = 'O';
-	sleep(msSleep(20));
+	sleep(msSleep(OPEN_TIME));
 	pthread_mutex_unlock(&shm.data->exits[exit].gate.lock);
 
 	pthread_mutex_lock(&shm.data->exits[exit].gate.lock);
 	shm.data->exits[exit].gate.status = 'L';
-	sleep(msSleep(10));
+	sleep(msSleep(LOWER_TIME));
 	pthread_mutex_unlock(&shm.data->exits[exit].gate.lock);
 
 	pthread_mutex_lock(&shm.data->exits[exit].gate.lock);

@@ -9,6 +9,7 @@
         "xlocnum": "c",
         "xtr1common": "c",
         "shm.h": "c",
-        "plates.h": "c"
+        "plates.h": "c",
+        "simulator.h": "c"
     }
 }

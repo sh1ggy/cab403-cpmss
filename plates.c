@@ -1,12 +1,3 @@
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <pthread.h>
-#include <errno.h> 
-#include <unistd.h>   
-
 #include "simulator.h"
 #include "plates.h"
 #include "lpr.h"
@@ -122,6 +113,7 @@ void *generateCars() {
 
     int entranceRand = generateInRange(0, 4);
 
+	// BOOM GATE
 	pthread_mutex_lock(&shm.data->entrances[entranceRand].gate.lock);
     shm.data->entrances[entranceRand].gate.status = 'C';
 	pthread_mutex_unlock(&shm.data->entrances[entranceRand].gate.lock);
@@ -140,7 +132,10 @@ void *generateCars() {
     int levelRand = entranceRand;
 
     char levelRandChar = levelRand + 1 + '0';
+    pthread_mutex_lock(&shm.data->entrances[entranceRand].sign.lock);
     shm.data->entrances[entranceRand].sign.status = levelRandChar;
+    pthread_mutex_unlock(&shm.data->entrances[entranceRand].sign.lock);
+
     // If true save to shared memory entrance LPR 
     if (found) {
         // || checkplate(plate)
@@ -175,40 +170,49 @@ void *generateCars() {
         // while (flag == 0);
 
         // Copies the car plate over to shared memory
+        pthread_mutex_lock(&shm.data->levels[levelRand].sensor.lock);
         strcpy(shm.data->levels[levelRand].sensor.plate, plate);
+        pthread_mutex_unlock(&shm.data->levels[levelRand].sensor.lock);
 
         flagPlateFound = true;
 
-        // BOOM GATE HERE @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        // BOOM GATE 
+        pthread_mutex_lock(&shm.data->entrances[entranceRand].gate.lock);
         shm.data->entrances[entranceRand].gate.status = 'R';
-        sleep(msSleep(10));
-        // boomgate character status
+        sleep(msSleep(RAISE_TIME));
+        pthread_mutex_unlock(&shm.data->entrances[entranceRand].gate.lock);
 
+        pthread_mutex_lock(&shm.data->entrances[entranceRand].gate.lock);
         shm.data->entrances[entranceRand].gate.status = 'O';
-        sleep(msSleep(20));
+        sleep(msSleep(OPEN_TIME));
+        pthread_mutex_unlock(&shm.data->entrances[entranceRand].gate.lock);
 
         pthread_mutex_lock(&shm.data->entrances[entranceRand].sensor.lock);
-
         initCars(plate, entranceRand);   
-    
         pthread_mutex_unlock(&shm.data->entrances[entranceRand].sensor.lock);
 
+        pthread_mutex_lock(&shm.data->entrances[entranceRand].gate.lock);   
         shm.data->entrances[entranceRand].gate.status = 'L';
-        sleep(msSleep(10));
+        sleep(msSleep(LOWER_TIME));
+        pthread_mutex_unlock(&shm.data->entrances[entranceRand].gate.lock);
 
+        pthread_mutex_lock(&shm.data->entrances[entranceRand].gate.lock);
         shm.data->entrances[entranceRand].gate.status = 'C';
-        
+        pthread_mutex_unlock(&shm.data->entrances[entranceRand].gate.lock);
     }
     else {
         flagPlateFound = false;
         
         // INFO SIGN 'X'
+        pthread_mutex_lock(&shm.data->entrances[entranceRand].sign.lock);
         shm.data->entrances[entranceRand].sign.status = 'X';
-
+        pthread_mutex_unlock(&shm.data->entrances[entranceRand].sign.lock);
     }
     
     // Unlock the mutex protection
     pthread_mutex_unlock(&mutex); 
+
     free(plate);
+
     return 0;
 }

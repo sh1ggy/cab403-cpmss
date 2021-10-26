@@ -14,9 +14,11 @@
 
 typedef int buffer_item;
 #define BUFFER_SIZE 5
+#define DRIVE_TO_PARKING_TIME 10
+#define DRIVE_TO_EXIT_TIME 10
+#define BILLING_RATE 0.05
 
 double carBill;
-
 
 void calcBill(int totalCarTime, char *plate);
 
@@ -24,7 +26,7 @@ void *generateCarTime();
 
 void *car();
 
-void initCars(char *plate, int entrance); //, int *levelCounter
+void initCars(char *plate, int entrance); 
 
 int sleepCarTime();
 

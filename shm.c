@@ -1,17 +1,4 @@
-
-#include <unistd.h>
-
-// shared memory libs
-#include <semaphore.h>
-#include <sys/types.h>
-#include <sys/mman.h>
-#include <sys/stat.h>       
-#include <sys/shm.h>       
-#include <fcntl.h>   
-#include <stddef.h>  
-
 #include "shm.h"
-
 
 bool create_shared_object( shared_memory_t* shm, const char* share_name ) {
     // printf("CREATING SHARED MEMORY\n");
@@ -45,34 +32,6 @@ bool create_shared_object( shared_memory_t* shm, const char* share_name ) {
         return false;
     }
 
-    // ------- TESTING SHARED MEMORY CODE
-    // printf("CARPARK:\n");
-
-    // char* plate = "123XXX";
-
-
-    // printf("READING LPR PLATE: %s\n", carpark->entrances[0].sensor.plate);
-
-    // printf("LEVEL 1 -> ENTRANCE -> GATE -> STATUS:\n");
-    // char* status = "O";
-    // strcpy(carpark->entrances[0].gate.status, status);
-    // printf("READING BOOM GATE: %s\n", carpark->entrances[0].gate.status);
-    
-    // printf("READING LPR PLATE, AGAIN: %s\n", carpark->entrances[0].sensor.plate);
-
-    // printf("entrances offset = %ld byte in address structure.\n",
-    // offsetof(carpark_t, entrances));
-
-    // printf("exits offset = %ld byte in address structure.\n",
-    // offsetof(carpark_t, exits));
-
-    // printf("levels offset = %ld byte in address structure.\n",
-    // offsetof(carpark_t, levels));
-
-    // int carparkInt = sizeof(carpark_t);
-    // printf("ENTIRE CARPARK: %d\n", carparkInt);
-
-    // printf("DONE CREATING SHARED MEMORY\n");
     return true;
 }
 

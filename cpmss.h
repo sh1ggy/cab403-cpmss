@@ -1,12 +1,15 @@
 /*****************************************************************//**
- * \file   dbl_vector.h
- * \brief  API definition for the dbl_vector abstract data type.
+ * \file   cpmss.h
+ * \brief  API definition for the whole system.
  * 
- * \author Lawrence
- * \date   August 2021
+ * \author Anna Nguyenm, Peter Nguyen, Tyrone Nolasco
+ * \date   October 2021
  *********************************************************************/
 #pragma once
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
 #include <math.h>
 #include <pthread.h>
