@@ -1,7 +1,7 @@
 #include "lpr.h"
 #include "simulator.h"
 
-// Setting number of buckets to 100
+// Setting number of buckets to 100 according to the plates.txt file
 #define BUCKETS_SIZE 100
 size_t buckets = BUCKETS_SIZE;
 
@@ -10,6 +10,7 @@ void item_print(item_t *i)
     printf("key=%s value=%d", i->key, i->value);
 }
 
+// Initialising the hash table to be created
 bool htab_init(htab_t *h, size_t n)
 {
     h->size = n;
@@ -39,6 +40,7 @@ item_t *htab_bucket(htab_t *h, char *key)
     return h->buckets[htab_index(h, key)];
 }
 
+// Searching the hash table to find a particular key value
 item_t *htab_find(htab_t *h, char *key)
 {
     for (item_t *i = htab_bucket(h, key); i != NULL; i = i->next)
@@ -51,6 +53,7 @@ item_t *htab_find(htab_t *h, char *key)
     return NULL;
 }
 
+// Adding values to the hash table
 bool htab_add(htab_t *h, char *key, int value)
 {
     // allocate new item
@@ -69,6 +72,7 @@ bool htab_add(htab_t *h, char *key, int value)
     return true;
 }
 
+// Printing the hash table created and its values stored
 void htab_print(htab_t *h)
 {
     printf("hash table with %ld buckets\n", h->size);
@@ -94,6 +98,7 @@ void htab_print(htab_t *h)
     }
 }
 
+// Destroying the hash table created
 void htab_destroy(htab_t *h)
 {
     // free linked lists
@@ -113,9 +118,21 @@ void htab_destroy(htab_t *h)
     h->size = 0;
 }
 
-// https://stackoverflow.com/questions/3501338/c-read-file-line-by-line
+// Initialise the hash table for plates to be stored
+int platesInit(  ) {
+    if (!htab_init(&h, buckets))
+    {
+        printf("failed to initialise hash table\n");
+        return EXIT_FAILURE;
+    }
+    return 0;
+} 
+
+// Read the file and add each line to the hash table
 void readPlates( const char * filename, const char * mode ) {
     platesInit();
+    
+    // Opening file
     FILE* fp;
     int count = 0;
     fp = fopen(filename, mode);
@@ -124,46 +141,42 @@ void readPlates( const char * filename, const char * mode ) {
         return;
     }
 
+    // Going through each line of the file 
     char buffer[256];
-
     while (fgets(buffer, sizeof buffer, fp)) {
         buffer[strcspn(buffer, "\n")] = 0;
-        // printf("%s\n", buffer);
         char *plate = (char *)malloc(sizeof(char)*100);  
         strcpy(plate, buffer);
         htab_add(&h, plate, count);
-
-        
-        // printf("%s\n HASH: ", plate);
-        // fgets(plate, 100 - 1, fp);
-        
         count++;
     }
 
-    //---------- PRINTING HASHTABLE
-    // htab_print(&h);
-    // item_print(htab_find(&h, "480GML"));
-
+    // Closing file
     fclose(fp);
     return;
 }
 
-//------------------------------------------ 50/50
+// Reading the plates.txt file to retrieve a license plate to be used
 bool randLine ( char *plate ) {
+    // Generate random line to get a plate from 
     int line;
     line = generateInRange( 1, 100 );
+    
+    // Opening file
     FILE *fp = fopen("plates.txt", "r");
     int count = 0;
     if ( fp == NULL) {
         return false;
     }
 
-    char buffer[256]; /* or other suitable maximum line size */
-    while (fgets(buffer, sizeof buffer, fp) != NULL) /* read a line */
+    // Read through each line of file
+    char buffer[256]; 
+    while (fgets(buffer, sizeof buffer, fp) != NULL)
     {
         buffer[strcspn(buffer, "\n")] = 0;
         if (count == line)
         {
+            // Close file
             fclose(fp);
             strcpy(plate, buffer);
 
@@ -176,15 +189,3 @@ bool randLine ( char *plate ) {
     }
     return false;
 }
-
-int platesInit(  ) {
-    if (!htab_init(&h, buckets))
-    {
-        printf("failed to initialise hash table\n");
-        return EXIT_FAILURE;
-    }
-    return 0;
-} 
-
-// clean up hash table
-// htab_destroy(&h);
