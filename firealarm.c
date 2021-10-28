@@ -25,17 +25,6 @@ pthread_cond_t alarm_condvar = PTHREAD_COND_INITIALIZER;
 #define MEDIAN_WINDOW 5
 #define TEMPCHANGE_WINDOW 30
 
-struct boomgate {
-	pthread_mutex_t m;
-	pthread_cond_t c;
-	char s;
-};
-struct parkingsign {
-	pthread_mutex_t m;
-	pthread_cond_t c;
-	char display;
-};
-
 struct tempnode {
 	int temperature;
 	struct tempnode *next;
@@ -63,33 +52,17 @@ void *tempmonitor(void *level)
 
 	struct tempnode *templist = NULL, *newtemp, *medianlist = NULL, *oldesttemp;
 	int count, mediantemp, hightemps; //addr
-	short *temp; // temp
 	int *tempLevel = (int *)level;
-	int idk = *tempLevel;
-	int tempSHM = shm.data->levels[idk].temperature_sensor;
 
-	printf("CHECKING %d\n", idk);
-	printf("empemp %d\n", *tempLevel);
-	printf("3shm %hu\n", shm.data->levels[*tempLevel].temperature_sensor);
-	printf("SHM: %d\n", tempSHM); 
-
-	if (shm.data->levels[idk].temperature_sensor == NULL)
+	if (shm.data->levels[*tempLevel].temperature_sensor == 0)
 	{
 		return 0;
 	}
 	for (;;) {
 		sleep(msSleep(50));
-		// Calculate address of temperature sensor
-		// addr = 0150 * level + 2496;
-		// temp = *((int16_t *)(shm + addr));
-		
-		// int *tempLevel = (int *)level;
-
-		temp = &shm.data->levels[*tempLevel].temperature_sensor; // ----------------
-		
 		// Add temperature to beginning of linked list
 		newtemp = malloc(sizeof(struct tempnode));
-		newtemp->temperature = shm.data->levels[*tempLevel].temperature_sensor; // ----------------
+		newtemp->temperature = shm.data->levels[*tempLevel].temperature_sensor; 
 		newtemp->next = templist;
 		templist = newtemp;
 		
@@ -113,7 +86,7 @@ void *tempmonitor(void *level)
 			// Add median temp to linked list
 			newtemp = malloc(sizeof(struct tempnode));
 			newtemp->temperature = mediantemp;
-			newtemp->next = medianlist; // ----------------
+			newtemp->next = medianlist; 
 			medianlist = newtemp;
 			
 			// Delete nodes after 30th
@@ -123,11 +96,11 @@ void *tempmonitor(void *level)
 			count = 0;
 			hightemps = 0;
 			
-			for (struct tempnode *t = medianlist; t != NULL; t = t->next) { //----------------
+			for (struct tempnode *t = medianlist; t != NULL; t = t->next) { 
 				// Temperatures of 58 degrees and higher are a concern
 				if (t->temperature >= 58) hightemps++;
 				// Store the oldest temperature for rate-of-rise detection
-				oldesttemp = t; //----------------
+				oldesttemp = t; 
 				count++;
 			}
 			
@@ -147,46 +120,17 @@ void *tempmonitor(void *level)
 				}
 			}
 		}
-		
 		usleep(2000);
-		
 	}
 	return 0;
 }
 
 void *openboomgate(void *arg)
 {
-	// struct boomgate *bg = arg;
-	// pthread_mutex_lock(&bg->m);
-	// for (;;) {
-	// 	if (bg->s == 'C') {
-	// 		bg->s = 'R';
-	// 		pthread_cond_broadcast(&bg->c);
-	// 	}
-	// 	if (bg->s == 'O') {
-	// 	}
-	// 	pthread_cond_wait(&bg->c, &bg->m);
-	// }
-	// pthread_mutex_unlock(&bg->m);
-
-	// boom_gate_t *bg = arg;
-
 	int *entrance = (int *) arg;
 	pthread_mutex_lock(&shm.data->entrances[*entrance].gate.lock);
 	pthread_mutex_lock(&shm.data->exits[*entrance].gate.lock);
 	for (;;) {
-		// if (bg->status == 'C') {
-		// 	bg->status = 'R';
-		// 	// cond broadcast
-		// }
-		// if (bg->status == 'O') {
-		// }
-		// cond wait
-		// for (int i = 0; i < LEVELS-1; i++) {
-		// 	shm.data->entrances[i].gate.status = 'O';
-		// 	shm.data->exits[i].gate.status = 'O';
-		// }
-
 		shm.data->entrances[0].gate.status = 'O';
 		shm.data->entrances[1].gate.status = 'O';
 		shm.data->entrances[2].gate.status = 'O';
@@ -214,52 +158,27 @@ void *openboomgate(void *arg)
 
 void *fireAlarmMain()
 {
-	// shm_fd = shm_open("PARKING", O_RDWR, 0);
-	// shm = (volatile void *) mmap(0, 2920, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
-	
 	pthread_t *threads = malloc(sizeof(pthread_t) * LEVELS);
 	
 	for (int i = 0; i < 4; i++) {
-		// pthread_create(threads + i, NULL, (void *(*)(void *)) tempmonitor, (void *)i)
 			pthread_create(threads + i, NULL, tempmonitor, &i);
-			printf("i: %d\n", i);
-			// pthread_create(&thread, NULL, tempmonitor, &i);
 	}
 	for (;;) {
 		if (alarm_active) {
-					// goto emergency_mode;
-					// emergency_mode:
-
-			// fprintf(stderr, "*** ALARM ACTIVE ***\n");
 			printf("*** ALARM ACTIVE ***\n");
 
 			// Handle the alarm system and open boom gates
 			// Activate alarms on all levels
 			for (int i = 0; i < LEVELS; i++) {
-				// int addr = 0150 * i + 2498; 
-				// char *alarm_trigger = (char *)shm + addr;
-				// *alarm_trigger = 1;
 				shm.data->levels[i].alarm = true; // NO MUTEX LOCK 
 			}
 			
 			// Open up all boom gates
 			pthread_t *boomgatethreads = malloc(sizeof(pthread_t) * (ENTRANCES + EXITS));
 			for (int i = 0; i < ENTRANCES; i++) {
-				// int addr = 288 * i + 96;
-				// volatile struct boomgate *bg = shm + addr;
-
-				// boom_gate_t bg = shm.data->entrances[i].gate;
-
-				// pthread_create(boomgatethreads + i, NULL, openboomgate, bg);
 				pthread_create(boomgatethreads + i, NULL, openboomgate, &i);
 			}
 			for (int i = 0; i < EXITS; i++) {
-				// int addr = 192 * i + 1536;
-				// volatile struct boomgate *bg = shm + addr;
-				
-				// boom_gate_t bg = shm.data->exits[i].gate;
-				
-				// pthread_create(boomgatethreads + ENTRANCES + i, NULL, openboomgate, bg);
 				pthread_create(boomgatethreads + ENTRANCES + i, NULL, openboomgate, &i);
 			}
 			
@@ -269,12 +188,6 @@ void *fireAlarmMain()
 				char *evacmessage = "EVACUATE ";
 				for (char *p = evacmessage; *p != '\0'; p++) {
 					for (int i = 0; i < ENTRANCES; i++) {
-						// int addr = 288 * i + 192;
-						// volatile struct parkingsign *sign = shm + addr;
-						// pthread_mutex_lock(&sign->m);
-						// sign->display = *p;
-						// pthread_cond_broadcast(&sign->c);
-						// pthread_mutex_unlock(&sign->m);
 						information_sign_t *sign = &shm.data->entrances[i].sign;
 						pthread_mutex_lock(&sign->lock);
 						sign->status = *p;
@@ -287,9 +200,6 @@ void *fireAlarmMain()
 			for (int i = 0; i < LEVELS; i++) {
 				pthread_join(threads[i], NULL);
 			}
-			
-			// munmap((void *)shm, 2920);
-			// close(shm_fd);
 		}
 		usleep(1000);
 	}
