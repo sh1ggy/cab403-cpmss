@@ -3,35 +3,34 @@
 #include "lpr.h"
 #include "shm.h"
 #include "cars.h"
+#include "cpmss.h"
 
-/* global mutex for our program. */
+// Global mutex for our plates.c 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-int flag = 0;
-bool flagPlateFound = false;
-bool found = false;
-shared_memory_t shm;
 pthread_mutex_t plateGenerationMutex;
-#define CHECK_TIME 2
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 
+shared_memory_t shm;
+
+// Intialising flags to be used
+int flag = 0;
+bool found = false;
+bool flagPlateFound = false;
+bool flagTempGenerated = false;
+int full = 0;
+
+// Check the plate against the hash table made from plates.txt
 bool checkPlate( char *plate ) {
     if (htab_find(&h, plate) == NULL) {
         return false;
     }
     else {
-        // printf("\n---------FOUND PLATE---------\n");
-        // printf("VALID PLATE: %s\n", plate);
-        // exit(0); // -------------COMMENT OUT LATER THIS IS FOR TESTING
-        // sleep(3);
         return true;
     }
     return false;
 }
 
-/**
-* GENERATING PLATES TO BE CHECKED
-*/
-
+// Thread function to generate the plates to be checked
 void *generatePlate(char *plate) {
     // Mutex locks to protect the global random
     pthread_mutex_lock(&plateGenerationMutex);
@@ -40,9 +39,7 @@ void *generatePlate(char *plate) {
 
     if (allowCarCheck == 0)
     {
-        // strcpy(plate, randLine());
         randLine(plate);
-        // printf("RAND: %s\n", plate);
         found = true;
     }
     else
@@ -67,10 +64,13 @@ void *generatePlate(char *plate) {
         }
     }
     
+    // Unlock mutex
     pthread_mutex_unlock(&plateGenerationMutex);
+    
     return 0;
 }
 
+// Thread function to generate the random time between cars being generated
 void *generatePlateTime() {
     // Lock mutex to protect variables
     pthread_mutex_lock(&mutex);
@@ -78,11 +78,9 @@ void *generatePlateTime() {
     // Signal that work is being done
     pthread_cond_signal(&cond);
 
-    // -------------- REMOVE SLEEP TO TEST PLATE GENERATION
     // Generate time  
     int plateGenerateTime = generateInRange(1, 100);
     int plateGenerateMS;    
-    // printf("RAND TIME: %d\n", plateGenerateTime); //-- printing rand time
     
     // Calculate sleep for ms
     plateGenerateMS = msSleep(plateGenerateTime);
@@ -97,6 +95,20 @@ void *generatePlateTime() {
     return 0;
 }
 
+// Generating a random temperature between a range on each floor for simulator
+void *generateTemp() {
+    int tempSleepTime = generateInRange(1,5);
+    sleep(msSleep(tempSleepTime));
+    
+    for (int i = 0; i < NUM_LEVELS; i++) {
+        int temperatureRand = generateInRange(50,57);
+        shm.data->levels[i].temperature_sensor = temperatureRand;
+    }
+    flagTempGenerated = true;
+    return 0;
+}
+
+// Function to check cars and generate a car thread 
 void *generateCars() {
     char *plate = (char *)calloc(6, sizeof(char));
 
@@ -111,9 +123,10 @@ void *generateCars() {
     // Generate the plate and assign
     generatePlate(plate);
 
-    int entranceRand = generateInRange(0, 4);
+    // Randomly generating the entrance check the car will go to (1-5)
+    int entranceRand = generateInRange(0, NUM_LEVELS-1);
 
-	// BOOM GATE
+	// Boom Gate status being set as 'C' closed at the start
 	pthread_mutex_lock(&shm.data->entrances[entranceRand].gate.lock);
     shm.data->entrances[entranceRand].gate.status = 'C';
 	pthread_mutex_unlock(&shm.data->entrances[entranceRand].gate.lock);
@@ -122,6 +135,7 @@ void *generateCars() {
     shm.data->exits[entranceRand].gate.status = 'C';
     pthread_mutex_unlock(&shm.data->exits[entranceRand].gate.lock);
     
+    // Obtain plate from shared memory
     pthread_mutex_lock(&shm.data->entrances[entranceRand].sensor.lock);
     strcpy(shm.data->entrances[entranceRand].sensor.plate, plate);
     pthread_mutex_unlock(&shm.data->entrances[entranceRand].sensor.lock);
@@ -129,89 +143,112 @@ void *generateCars() {
     // Once a car reaches the front of the queue, it will wait 2ms before triggering the entrance LPR.
     sleep(msSleep(CHECK_TIME));
 
-    int levelRand = entranceRand;
+    char infoStatusChar = entranceRand + 1 + '0';
 
-    char levelRandChar = levelRand + 1 + '0';
+    // Update the information sign's status
     pthread_mutex_lock(&shm.data->entrances[entranceRand].sign.lock);
-    shm.data->entrances[entranceRand].sign.status = levelRandChar;
+    shm.data->entrances[entranceRand].sign.status = infoStatusChar;
     pthread_mutex_unlock(&shm.data->entrances[entranceRand].sign.lock);
 
+
+    if ((level[0] == MAX_LEVEL_CAPACITY) && (level[1] == MAX_LEVEL_CAPACITY) && (level[2] == MAX_LEVEL_CAPACITY) && (level[3] == MAX_LEVEL_CAPACITY) && (level[4] == MAX_LEVEL_CAPACITY)) {
+        full = 5;
+        flagPlateFound = true;
+    }
+
+
     // If true save to shared memory entrance LPR 
-    if (found) {
-        // || checkplate(plate)
+    if (found && (full != 5)) {
+        // Flipping the found bool once a car enters
         found = false;
 
-        // Randomly generating the entrance check the car will go to (1-5)
+        // Initalising variable to be used 
         int entranceDiff = 0;
 
-        // i -> entrance no.
-        // level[i] -> capacity
-        // do {
-            for (int i = 0; i < 5; i++) {
-                if (i == levelRand) {
-                    if (level[i] < MAX_LEVEL_CAPACITY) {
-                        level[i]++;
-                        // printf("LEVEL: %d, CAPACITY: %d\n", i+1, level[i]);
-                    }
-                    else {
-                        // INFO SIGN 'F'
-                        shm.data->entrances[entranceRand].sign.status = 'F';
-                        do {
-                            entranceDiff = generateInRange(0,4);   
-                        } 
-                        while (entranceDiff == levelRand);       
-                        levelRand = entranceDiff;
-                        level[levelRand]++;
-                        // printf("LEVEL: %d, CAPACITY: %d\n", levelRand+1, level[levelRand]);         
-                    }
+        // Unusual behaviour of car to move to a different level than originally assigned: 5% chance
+        int unusualBehaviour = generateInRange(0,20);
+
+        if (unusualBehaviour == 0)
+        {
+            entranceRand = generateInRange(0, NUM_LEVELS-1);
+        }
+
+        // Checking if the assign level is full 
+        for (int i = 0; i < NUM_LEVELS; i++) {
+            if (i == entranceRand) {
+                if (level[i] < MAX_LEVEL_CAPACITY) {
+                    level[i]++; // Incrementing the level capacity
+                }
+                // Reassigning a level which is not full
+                else {
+                    shm.data->entrances[entranceRand].sign.status = 'F';
+                    do {
+                        entranceDiff = generateInRange(0,4);
+                        if (level[i] < MAX_LEVEL_CAPACITY) {
+                            level[entranceDiff]++;   
+                            entranceRand = entranceDiff;
+                        }    
+                    } 
+                    while (entranceDiff == entranceRand);       
                 }
             }
-        // }
-        // while (flag == 0);
+        }
 
         // Copies the car plate over to shared memory
-        pthread_mutex_lock(&shm.data->levels[levelRand].sensor.lock);
-        strcpy(shm.data->levels[levelRand].sensor.plate, plate);
-        pthread_mutex_unlock(&shm.data->levels[levelRand].sensor.lock);
+        pthread_mutex_lock(&shm.data->levels[entranceRand].sensor.lock);
+        strcpy(shm.data->levels[entranceRand].sensor.plate, plate);
+        pthread_mutex_unlock(&shm.data->levels[entranceRand].sensor.lock);
 
+        // Signal to manager.c that a plate has been found and that it is safe to print
         flagPlateFound = true;
 
-        // BOOM GATE 
+	    // Boom Gate status being set and slept for raising
         pthread_mutex_lock(&shm.data->entrances[entranceRand].gate.lock);
         shm.data->entrances[entranceRand].gate.status = 'R';
         sleep(msSleep(RAISE_TIME));
         pthread_mutex_unlock(&shm.data->entrances[entranceRand].gate.lock);
 
+        // Boom Gate status being set and slept for opening
         pthread_mutex_lock(&shm.data->entrances[entranceRand].gate.lock);
         shm.data->entrances[entranceRand].gate.status = 'O';
         sleep(msSleep(OPEN_TIME));
         pthread_mutex_unlock(&shm.data->entrances[entranceRand].gate.lock);
 
+        // Initialise the car thread, sending the appropriate plate and its entrance
         pthread_mutex_lock(&shm.data->entrances[entranceRand].sensor.lock);
         initCars(plate, entranceRand);   
         pthread_mutex_unlock(&shm.data->entrances[entranceRand].sensor.lock);
 
+        // Boom Gate status being set and slept for lowering after the car enters
         pthread_mutex_lock(&shm.data->entrances[entranceRand].gate.lock);   
         shm.data->entrances[entranceRand].gate.status = 'L';
         sleep(msSleep(LOWER_TIME));
         pthread_mutex_unlock(&shm.data->entrances[entranceRand].gate.lock);
 
+        // Boom Gate status being set to closed
         pthread_mutex_lock(&shm.data->entrances[entranceRand].gate.lock);
         shm.data->entrances[entranceRand].gate.status = 'C';
         pthread_mutex_unlock(&shm.data->entrances[entranceRand].gate.lock);
     }
     else {
+        // Signal to manager.c that a plate has not been found and that it is not safe to print
         flagPlateFound = false;
-        
-        // INFO SIGN 'X'
-        pthread_mutex_lock(&shm.data->entrances[entranceRand].sign.lock);
-        shm.data->entrances[entranceRand].sign.status = 'X';
-        pthread_mutex_unlock(&shm.data->entrances[entranceRand].sign.lock);
+
+        if (full == 5) {
+            shm.data->entrances[entranceRand].sign.status = 'F';
+        }
+        else {
+            // Information Sign status being set to 'X' for unapproved cars
+            pthread_mutex_lock(&shm.data->entrances[entranceRand].sign.lock);
+            shm.data->entrances[entranceRand].sign.status = 'X';
+            pthread_mutex_unlock(&shm.data->entrances[entranceRand].sign.lock);
+        }
     }
     
     // Unlock the mutex protection
     pthread_mutex_unlock(&mutex); 
 
+    // Freeing plate memory allocation
     free(plate);
 
     return 0;

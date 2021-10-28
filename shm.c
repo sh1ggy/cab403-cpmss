@@ -1,13 +1,14 @@
 #include "shm.h"
 
+// Create the shared memory object and allocate memory
 bool create_shared_object( shared_memory_t* shm, const char* share_name ) {
-    // printf("CREATING SHARED MEMORY\n");
-    // Remove any previous instance of the shared memory object, if it exists.
+    // Remove previous instances of shared memory
     shm_unlink(share_name);
     
+    // shm name set to params
     shm -> name = share_name;
 
-    // shm init, saved to shm_fd
+    // Shared memory file descriptor initialisation & error check
     int shm_fd = shm_open(share_name, O_CREAT | O_RDWR, 0666);
     shm -> fd = shm_fd; 
     // Error check
@@ -22,9 +23,7 @@ bool create_shared_object( shared_memory_t* shm, const char* share_name ) {
         return false;
     }
 
-    // TO DO: SHARED MEMORY RETRIEVAL FUNCTION
-
-    // NULL address ensures this is inserted appropriately into shared memory - the address is chosen by the OS
+    // Shared memory carpark, data initialisation
     carpark_t *carpark = mmap(NULL, PARKING_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
     shm -> data = carpark;
     if (shm->data == MAP_FAILED)
@@ -35,10 +34,9 @@ bool create_shared_object( shared_memory_t* shm, const char* share_name ) {
     return true;
 }
 
+// Get shared object based on the share_name
 bool get_shared_object( shared_memory_t* shm, const char* share_name ) {
-    // Get a file descriptor connected to shared memory object and save in 
-    // shm->fd. If the operation fails, ensure that shm->data is 
-    // NULL and return false.
+    // Shared memory file descriptor initialisation & error check
     int shm_fd = shm_open(share_name, O_RDWR, 0);
     shm -> fd = shm_fd;
     if (shm_fd < 0) 
@@ -48,11 +46,11 @@ bool get_shared_object( shared_memory_t* shm, const char* share_name ) {
         return false;
     }
 
-    // Otherwise, attempt to map the shared memory via mmap, and save the address
-    // in shm->data. If mapping fails, return false.
+    // Shared memory carpark, data initialisation
     carpark_t *map = mmap(0, PARKING_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
     shm -> data = map;
 
+    // Error check 
     if (map == MAP_FAILED)
     {
         shm -> fd = -1;
@@ -60,12 +58,11 @@ bool get_shared_object( shared_memory_t* shm, const char* share_name ) {
         return false;
     }
 
-    // Modify the remaining stub only if necessary.
     return true;
 }
-
+    
+// Remove the shared memory object and free memory
 void destroy_shared_object( shared_memory_t* shm ) {
-    // Remove the shared memory object.
     munmap(&shm, 48);
     shm_unlink(shm -> name);
     shm -> fd = -1;

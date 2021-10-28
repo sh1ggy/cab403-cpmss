@@ -4,24 +4,22 @@
 #include "shm.h"
 #include "cars.h"
 
-buffer_item buffer[BUFFER_SIZE];
 pthread_mutex_t fileLock;
-sem_t empty;
-sem_t full;
 
+// Struct for car
 typedef struct cars {
 	char plate[6];
 	int entrance;
 } cars_t;
 
-int insertPointer = 0, removePointer = 0;
-
+// Calculate the bill based on time spent, adding to the total revenue of manager.c
 void calcBill(int totalCarTime, char *plate) {
 	double totalBill = totalCarTime * BILLING_RATE;
 	carBill += totalBill;
 	createBillingFile(plate, totalBill);
 }
 
+// Create / write to the billing.txt file with the plate and the total bill
 void createBillingFile(char *plate, double totalBill) {
 	pthread_mutex_lock(&fileLock);
 	FILE *fp = fopen("billing.txt", "a");
@@ -30,33 +28,31 @@ void createBillingFile(char *plate, double totalBill) {
 	pthread_mutex_unlock(&fileLock);
 }
 
-// DO WORK
+// Calculate the total time a car is in the car park for after entering
 int sleepCarTime( ) {
-	int driveParkingSpaceTime = DRIVE_TO_PARKING_TIME;
 	int parkingTime = 0;
-	int driveExitTime = DRIVE_TO_EXIT_TIME;
     int parkingGenerateTime = generateInRange(100, 10000);
-	int totalCarTime = driveParkingSpaceTime + parkingGenerateTime + driveExitTime;
+	int totalCarTime = DRIVE_TO_PARKING_TIME + parkingGenerateTime + DRIVE_TO_EXIT_TIME;
 	
-	sleep(msSleep(driveParkingSpaceTime));
-
+	sleep(msSleep(DRIVE_TO_PARKING_TIME));
     parkingTime = msSleep(parkingGenerateTime);
     sleep(parkingTime); 
-	
-	sleep(msSleep(driveExitTime));
+	sleep(msSleep(DRIVE_TO_EXIT_TIME));
 
     return totalCarTime;
 }
 
+// Work that the car does 
 void *car(void *params)
 {
 	cars_t *carThreadParams = params;
 	
 	char *plate = carThreadParams->plate;
+	// Calculate the bill and sleep the thread for the designated time
 	calcBill(sleepCarTime(), plate);	
 	int exit = carThreadParams->entrance;
 
-	// BOOM GATE
+	// Boom Gate Status: when the car exits the car park
 	pthread_mutex_lock(&shm.data->exits[exit].gate.lock);
 	strcpy(shm.data->exits[exit].sensor.plate, plate);	
 	shm.data->exits[exit].gate.status = 'R';
@@ -77,58 +73,28 @@ void *car(void *params)
 	shm.data->exits[exit].gate.status = 'C';
 	pthread_mutex_unlock(&shm.data->exits[exit].gate.lock);
 
+	// Decrement the capacity for the level after the car leaves
 	level[exit]--;
-
 
 	free(carThreadParams);
 	return 0;
 }
 
-void initCars(char *plate, int entrance) //, int *levelCounter
+// Initialise the variables to be sent into the car thread
+void initCars(char *plate, int entrance) 
 {
+	pthread_t carsThread;
 
-    //consumerThreads, producerThreads
-	// int value1 = 0, value2 = 0;
-    pthread_t carsThread;
-
-	// cars_t *carThreadParams;
 	cars_t *carThreadParams = malloc(sizeof(cars_t));
-	// carThreadParams->plate = plate;
 	strcpy(carThreadParams->plate, plate);
 	carThreadParams->entrance = entrance;
-	// carThreadParams->levelCounter = levelCounter;
-	
-	// printf("CAR INIT PLATE: %s, CAR INIT ENTRANCE: %d, CAR INIT COUNTER: %d\n", carThreadParams->plate, carThreadParams->entrance, *carThreadParams->levelCounter);
 
-	// char *threadPlateID = plate; 
-
-	//Initialize the the locks
+	// Initialize the the locks
 	pthread_mutex_init(&fileLock, NULL);
-	// sem_init(&empty, 0, BUFFER_SIZE);
-	// sem_init(&full, 0, 0);
-	
 
-	// sem_getvalue(&full, &value1);
-	// sem_getvalue(&empty, &value2);
-
-	// pthread_attr_t attr;
-	// pthread_attr_init(&attr);
-
-	// printf("INIT CAR LEVEL: %d\n", *levelCounter);
-	// printf("INIT CAR LEVEL ENTRANCE: %d\n", entrance);
-	// printf("INIT CAR LEVEL CAPACITY FROM ARRY: %d\n", level[entrance]--);
-
-
-
+	// Creating a thread for each individual car which enters the car park
+	// and passing through its plate and level information
 	pthread_create(&carsThread, NULL, car, (void *)carThreadParams);
 
-	// *levelCounter--;
-
-	// printf("DECREMENTED LEVEL: %d\n", *levelCounter);
-	
-	
-	// level[entrance]--;
-
-	// }
 	return;
 }
