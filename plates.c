@@ -101,7 +101,7 @@ void *generateTemp() {
     sleep(msSleep(tempSleepTime));
     
     for (int i = 0; i < NUM_LEVELS; i++) {
-        int temperatureRand = generateInRange(60,67);
+        int temperatureRand = generateInRange(LOWER_TEMP,HIGHER_TEMP);
         shm.data->levels[i].temperature_sensor = temperatureRand;
     }
     flagTempGenerated = true;

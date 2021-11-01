@@ -173,7 +173,8 @@ void *fireAlarmMain()
 			// Handle the alarm system and open boom gates
 			// Activate alarms on all levels
 			for (int i = 0; i < LEVELS; i++) {
-				shm.data->levels[i].alarm = true; // NO MUTEX LOCK 
+				shm.data->levels[i].alarm = true;
+				strcpy(shm.data->exits[i].sensor.plate, shm.data->levels[i].sensor.plate);
 			}
 			
 			// Open up all boom gates
@@ -189,6 +190,23 @@ void *fireAlarmMain()
 			for (;;) {
 				sleep(msSleep(100));
 				char *evacmessage = "EVACUATE ";
+				shm.data->entrances[0].gate.status = 'O';
+				shm.data->entrances[1].gate.status = 'O';
+				shm.data->entrances[2].gate.status = 'O';
+				shm.data->entrances[3].gate.status = 'O';
+				shm.data->entrances[4].gate.status = 'O';
+				
+				shm.data->exits[0].gate.status = 'O';
+				shm.data->exits[1].gate.status = 'O';
+				shm.data->exits[2].gate.status = 'O';
+				shm.data->exits[3].gate.status = 'O';
+				shm.data->exits[4].gate.status = 'O';
+
+				level[0] = 0;
+				level[1] = 0; 
+				level[2] = 0;
+				level[3] = 0; 
+				level[4] = 0;
 				for (char *p = evacmessage; *p != '\0'; p++) {
 					for (int i = 0; i < ENTRANCES; i++) {
 						information_sign_t *sign = &shm.data->entrances[i].sign;

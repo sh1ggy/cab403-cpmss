@@ -25,6 +25,8 @@ extern bool flagPlateFound;   // Flag for manager to use for the While Loop
 #define RAISE_TIME 10         // Time for the boom gate to be raised: 10ms
 #define OPEN_TIME 20          // Time duration for the boom gate to be opened: 20ms
 #define LOWER_TIME 10         // Time for the boom gate to be lowered: 10ms
+#define LOWER_TEMP 20         // Lower range for the temperature to be generated in 
+#define HIGHER_TEMP 50        // Upper range for the temperature to be generated in 
 int level[NUM_LEVELS];        // Setting the total amount of levels to be 5
 int full;                     // Number to check if all levels are full
 
