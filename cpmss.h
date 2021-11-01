@@ -18,6 +18,8 @@
 #include <unistd.h>
 #include <errno.h> 
 
+bool globalAlarmActive;
+
 // The main thread function for the manager.c file
 void *managerMain ( );
 

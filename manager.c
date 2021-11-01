@@ -14,7 +14,7 @@ void *managerMain()
     {
         fflush(0);
         // Printing out the manager console
-        if (flagPlateFound) 
+        if (flagPlateFound || globalAlarmActive) 
         {
             // Status display: entrances, levels, exits, total revenue
             printf("------------------ENTRANCES------------------\n");

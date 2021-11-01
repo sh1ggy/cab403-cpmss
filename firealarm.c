@@ -25,6 +25,8 @@ pthread_cond_t alarm_condvar = PTHREAD_COND_INITIALIZER;
 #define MEDIAN_WINDOW 5
 #define TEMPCHANGE_WINDOW 30
 
+bool globalAlarmActive = false;
+
 struct tempnode {
 	int temperature;
 	struct tempnode *next;
@@ -48,7 +50,7 @@ int compare(const void *first, const void *second)
 
 void *tempmonitor(void *level)
 {
-	sleep(msSleep(100));
+	sleep(msSleep(250));
 
 	struct tempnode *templist = NULL, *newtemp, *medianlist = NULL, *oldesttemp;
 	int count, mediantemp, hightemps; //addr
@@ -109,6 +111,7 @@ void *tempmonitor(void *level)
 				// this is considered a high temperature. Raise the alarm
 				if (hightemps >= TEMPCHANGE_WINDOW * 0.9){
 					alarm_active = 1;
+					globalAlarmActive = true;
 				}
 				
 				// If the newest temp is >= 8 degrees higher than the oldest
@@ -117,6 +120,7 @@ void *tempmonitor(void *level)
 				if (templist->temperature - oldesttemp->temperature >= 8)
 				{
 					alarm_active = 1;
+					globalAlarmActive = true;
 				}
 			}
 		}
@@ -165,7 +169,6 @@ void *fireAlarmMain()
 	}
 	for (;;) {
 		if (alarm_active) {
-			printf("*** ALARM ACTIVE ***\n");
 
 			// Handle the alarm system and open boom gates
 			// Activate alarms on all levels
